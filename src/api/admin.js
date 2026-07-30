@@ -140,6 +140,8 @@ export function normalizeAdminCourse(course) {
     embedUrl: resolveMediaUrl(course.embed_url || course.video_url || ""),
     introVideoUrl: resolveMediaUrl(course.video_url || metadata.intro_video_url || ""),
     thumbnailUrl: resolveMediaUrl(course.thumbnail_url || metadata.thumbnail_url || ""),
+    accessUrl: course.access_url || "",
+    fileType: metadata.file_type || "PDF",
     duration: course.duration || "",
     level: course.level || "",
     outcomesText: Array.isArray(course.outcomes) ? course.outcomes.join("\n") : "",
@@ -158,8 +160,10 @@ export function normalizeAdminPortfolio(project) {
     id: project.slug || project.id,
     image: imageNumber,
     imageUrl: resolveMediaUrl(project.metadata?.image_url || project.images?.[0] || ""),
+    mediaType: project.metadata?.media_type || "",
     status: project.is_published ? (project.featured ? "Featured" : "Visible") : "Draft",
     embedUrl: project.project_url || "",
+    actionLabel: project.metadata?.action_label || "",
     description: project.summary || "",
   };
 }
@@ -358,6 +362,7 @@ export async function saveAdminCourse(draft, existingCourse) {
   const embedUrl = draft.embedUrl?.trim?.() || "";
   const manualIntroVideoUrl = draft.introVideoUrl?.trim?.() || "";
   const manualThumbnailUrl = draft.thumbnailUrl?.trim?.() || "";
+  const accessUrl = draft.accessUrl?.trim?.() || "";
   const isFullUrl = (value) => /^https?:\/\//i.test(value || "");
   const payload = {
     title,
@@ -370,6 +375,7 @@ export async function saveAdminCourse(draft, existingCourse) {
     embed_url: isFullUrl(embedUrl) ? embedUrl : "",
     video_url: isFullUrl(manualIntroVideoUrl) ? manualIntroVideoUrl : "",
     thumbnail_url: isFullUrl(manualThumbnailUrl) ? manualThumbnailUrl : "",
+    access_url: isFullUrl(accessUrl) ? accessUrl : "",
     duration: draft.duration?.trim?.() || "",
     level: draft.level?.trim?.() || "",
     is_published: draft.status !== "Draft",
@@ -380,6 +386,7 @@ export async function saveAdminCourse(draft, existingCourse) {
       embed_url: embedUrl,
       thumbnail_url: thumbnail?.path || manualThumbnailUrl || "",
       intro_video_url: introVideo?.path || manualIntroVideoUrl || embedUrl,
+      file_type: draft.fileType?.trim?.() || "PDF",
     },
   };
   Object.keys(payload).forEach((key) => payload[key] === undefined && delete payload[key]);
@@ -420,6 +427,8 @@ export async function saveAdminPortfolio(draft, existingProject) {
       ...(existingProject?.metadata || {}),
       image: imageValue,
       image_url: isUploadedImage ? imageValue : "",
+      media_type: draft.mediaType || (/\.(mp4|webm|ogg|mov)(?:$|[?#])/i.test(imageValue) || draft.imageFile?.type?.startsWith("video/") ? "video" : "image"),
+      action_label: draft.actionLabel?.trim?.() || "",
     },
   };
   Object.keys(payload).forEach((key) => payload[key] === undefined && delete payload[key]);

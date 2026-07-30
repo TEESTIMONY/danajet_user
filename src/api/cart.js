@@ -169,3 +169,7 @@ export async function submitCheckout(details) {
   clearStoredCartSession();
   return order;
 }
+
+export async function getOrders() {
+  return extractResults(await apiRequest("/api/orders/?ordering=-created_at"));
+}

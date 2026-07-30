@@ -84,3 +84,10 @@ export async function getCourse(slug) {
   const data = await apiRequest(`/api/courses/${slug}/`);
   return normalizeCourse(data);
 }
+
+export async function requestFreeResourceDownload(slug, { name = "", email }) {
+  return apiRequest(`/api/courses/${slug}/request-download/`, {
+    method: "POST",
+    body: { name, email },
+  });
+}

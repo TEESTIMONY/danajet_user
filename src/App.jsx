@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+﻿import React, { useEffect, useRef, useState } from "react";
 import {
   ArrowRight as LucideArrowRight,
   BarChart3,
@@ -6,12 +6,15 @@ import {
   BookOpen as LucideBookOpen,
   Boxes,
   ChevronDown as LucideChevronDown,
+  ChevronLeft as LucideChevronLeft,
+  ChevronRight as LucideChevronRight,
   ClipboardList,
   Download,
   Edit3,
   Eye,
   ExternalLink as LucideExternalLink,
   FileText as LucideFileText,
+  GraduationCap as LucideGraduationCap,
   Image as ImageIcon,
   Inbox,
   Layers3 as LucideLayers3,
@@ -41,6 +44,7 @@ import {
   Upload,
   UserRound as LucideUserRound,
   Users,
+  Video as LucideVideo,
   X as LucideX,
 } from "lucide-react";
 import {
@@ -78,13 +82,14 @@ import {
   clearBackendCart,
   getCartCount,
   getCartDisplayItems,
+  getOrders,
   removeCartItem,
   submitCheckout,
   updateCartItemQuantity,
 } from "./api/cart";
 import { resolveMediaUrl } from "./api/client";
 import { subscribeToNewsletter } from "./api/newsletter";
-import { getCourse, getCourses, getProduct, getProducts, getShopCategories } from "./api/shop";
+import { getCourse, getCourses, getProduct, getProducts, getShopCategories, requestFreeResourceDownload } from "./api/shop";
 import { mockProducts, shopCategories } from "./data/products";
 
 function BrandIcon({ label, children, className = "", size = 18 }) {
@@ -108,6 +113,8 @@ const ArrowRight = LucideArrowRight;
 const BookCopy = LucideBookCopy;
 const BookOpen = LucideBookOpen;
 const ChevronDown = LucideChevronDown;
+const ChevronLeft = LucideChevronLeft;
+const ChevronRight = LucideChevronRight;
 const ExternalLink = LucideExternalLink;
 const Facebook = (props) => (
   <BrandIcon label="Facebook" {...props}>
@@ -115,6 +122,7 @@ const Facebook = (props) => (
   </BrandIcon>
 );
 const FileText = LucideFileText;
+const GraduationCap = LucideGraduationCap;
 const Instagram = (props) => (
   <BrandIcon label="Instagram" {...props}>
     <path d="M7.8 2.75h8.4A5.06 5.06 0 0 1 21.25 7.8v8.4a5.06 5.06 0 0 1-5.05 5.05H7.8a5.06 5.06 0 0 1-5.05-5.05V7.8A5.06 5.06 0 0 1 7.8 2.75Zm0 1.8A3.25 3.25 0 0 0 4.55 7.8v8.4a3.25 3.25 0 0 0 3.25 3.25h8.4a3.25 3.25 0 0 0 3.25-3.25V7.8a3.25 3.25 0 0 0-3.25-3.25H7.8Zm4.2 3.23a4.22 4.22 0 1 1 0 8.44 4.22 4.22 0 0 1 0-8.44Zm0 1.8a2.42 2.42 0 1 0 0 4.84 2.42 2.42 0 0 0 0-4.84Zm4.48-2.86a1.04 1.04 0 1 1 0 2.08 1.04 1.04 0 0 1 0-2.08Z" />
@@ -147,6 +155,7 @@ const Tiktok = (props) => (
   </BrandIcon>
 );
 const UserRound = LucideUserRound;
+const Video = LucideVideo;
 const X = LucideX;
 const Youtube = (props) => (
   <BrandIcon label="YouTube" {...props}>
@@ -208,10 +217,26 @@ const navItems = [
   { label: "Home", href: "/#home" },
   { label: "About", href: "/about", children: [{ label: "About Danajet", href: "/about" }, { label: "Testimonials", href: "/reviews" }, { label: "Transport", href: "/transport" }] },
   { label: "BookLab", href: "/#booklab-services", children: [{ label: "Services", href: "/#booklab-services" }, { label: "Request a Project", href: "/request-project" }] },
-  { label: "Portfolio", href: "/portfolio", children: [{ label: "View Portfolio", href: "/portfolio" }, { label: "Shop on Amazon", href: "#amazon" }] },
-  { label: "Shop", href: "/shop" },
-  { label: "Academy", href: "/courses", children: ["Courses & Tutorials", "Community", "Free Resources"] },
-  { label: "Media", href: "/#brands" },
+  { label: "Portfolio", href: "/portfolio" },
+  {
+    label: "Shop",
+    href: "/shop",
+    children: [
+      { label: "🛒 Shop From Me", href: "/shop" },
+      { label: "📦 My Amazon Store", href: "https://www.amazon.com/author/danielthebooksmith" },
+      { label: "🎓 Courses & Tutorials", href: "/courses" },
+    ],
+  },
+  {
+    label: "Academy",
+    href: "/courses",
+    children: [
+      { label: "Courses & Tutorials", href: "/courses" },
+      { label: "Community", href: "/community" },
+      { label: "Free Resources", href: "/community#free-resources" },
+    ],
+  },
+  { label: "Media", href: "/media" },
   { label: "Contact", href: "/contact" },
 ];
 
@@ -243,26 +268,56 @@ const whatIDo = [
 ];
 
 const brands = [
-  { icon: BookOpen, name: "BookLab", copy: "Book design, formatting & publishing", code: "DL", href: "/request-project" },
-  { icon: Play, name: "Media", copy: "Storytelling, YouTube & content", code: "DM", href: "/request-project" },
-  { icon: Layers3, name: "Academy", copy: "Courses & learning resources", code: "DA", href: "/courses" },
-  { icon: Plane, name: "Transport", copy: "A future-facing transport vision", code: "DT", href: "/transport" },
+  { icon: BookOpen, name: "BookLab", copy: "Helping authors transform manuscripts into professionally designed, publish-ready books for print, digital, and self-publishing success.", code: "DL", href: "/request-project" },
+  { icon: Video, name: "Media", copy: "Creating educational videos, visual stories, documentaries, and digital content that educate, entertain, and inspire audiences worldwide.", code: "DM", href: "/media" },
+  { icon: GraduationCap, name: "Academy", copy: "Providing practical courses, templates, and learning resources that help authors and designers build valuable creative skills.", code: "DA", href: "/courses" },
+  { icon: Plane, name: "Transport", copy: "Building a future-focused transportation brand driven by innovation, connectivity, and smarter mobility for tomorrow.", code: "DT", href: "/transport" },
 ];
+
+const brandDescriptions = {
+  booklab: brands[0].copy,
+  media: brands[1].copy,
+  academy: brands[2].copy,
+  transport: brands[3].copy,
+};
 
 function resolveBrandIcon(brand) {
   const signature = `${brand.code || ""} ${brand.name || ""}`.toLowerCase();
-  if (signature.includes("media") || signature.includes("dm")) return Play;
-  if (signature.includes("academy") || signature.includes("da")) return Layers3;
+  if (signature.includes("media") || signature.includes("dm")) return Video;
+  if (signature.includes("academy") || signature.includes("da")) return GraduationCap;
   if (signature.includes("transport") || signature.includes("dt")) return Plane;
   return BookOpen;
 }
 
+function resolveBrandIconValue(icon) {
+  if (typeof icon === "function") return icon;
+  if (typeof icon !== "string") return null;
+  const key = icon.trim().toLowerCase();
+  const iconMap = {
+    bookopen: BookOpen,
+    booklab: BookOpen,
+    media: Video,
+    video: Video,
+    play: Play,
+    playcircle: Play,
+    layers: Layers3,
+    layers3: Layers3,
+    academy: GraduationCap,
+    graduationcap: GraduationCap,
+    plane: Plane,
+    transport: Plane,
+    monitorplay: MonitorPlay,
+  };
+  return iconMap[key] || null;
+}
+
 function normalizeBrandCard(brand) {
+  const brandKey = Object.keys(brandDescriptions).find((key) => `${brand.name || ""} ${brand.code || ""}`.toLowerCase().includes(key));
   return {
     ...brand,
-    icon: brand.icon || resolveBrandIcon(brand),
-    href: brand.href || brand.link || "/request-project",
-    copy: brand.copy || brand.summary || "",
+    icon: resolveBrandIconValue(brand.icon) || resolveBrandIcon(brand),
+    href: brandKey === "media" ? "/media" : (brand.href || brand.link || "/request-project"),
+    copy: brandDescriptions[brandKey] || brand.copy || brand.summary || "",
   };
 }
 
@@ -420,7 +475,7 @@ const bookSizeOptions = [
 
 const budgetOptions = ["Under $1,000", "$1,000 - $5,000", "$5,000 - $10,000", "Above $10,000"];
 const timelineOptions = ["ASAP", "Within 1 week", "Within 2-4 weeks", "1-3 months", "Flexible"];
-const referralOptions = ["Google Search", "Amazon Books", "YouTube", "Tiktok", "Facebook", "Referral", "Previous Client", "Other"];
+const referralOptions = ["Google Search", "Amazon Books", "YouTube", "Tiktok", "Facebook", "Referral", "Previous Client"];
 const contactMethodOptions = ["WhatsApp", "Email"];
 const manuscriptOptions = ["Yes, I will upload it now", "Yes, I will send it later", "No, I am still working on it"];
 
@@ -493,6 +548,7 @@ const courseCategories = [
       "A+ Content Planning Template",
       "Book Launch Planner",
       "Children's Book Planning Workbook",
+      "Free AI YouTube Video Workflow Checklist (A Simple Step-by-Step Roadmap from Script Creation to Final Video Export)",
     ],
   },
 ];
@@ -525,6 +581,49 @@ const academyHeroSlides = [
     image: "/assets/danajet-books-flight-hero.png",
     theme: "dark",
   },
+];
+
+const mediaChannelDefaults = [
+  {
+    id: "daniel-the-booksmith",
+    name: "Daniel the Booksmith",
+    description: "Helping Authors Make Their Books Soar!",
+    url: "https://www.youtube.com/@danielthebooksmith",
+    logo: "",
+    banner: "",
+    status: "active",
+  },
+  {
+    id: "curiobody",
+    name: "CurioBody",
+    description: "Your Body Is Stranger Than You Think.",
+    url: "https://www.youtube.com/@thecuriobody",
+    logo: "",
+    banner: "",
+    status: "active",
+  },
+  {
+    id: "finance-channel",
+    name: "Coming Soon",
+    description: "The Stories Behind Every Financial Decision.",
+    url: "",
+    logo: "",
+    banner: "",
+    status: "coming-soon",
+  },
+];
+
+const mediaProductionDefaults = [
+  { id: "production-1", title: "Featured Book Trailer", category: "Book Trailers", youtubeUrl: "", displayOrder: 1 },
+  { id: "production-2", title: "Educational Story", category: "Educational Stories", youtubeUrl: "", displayOrder: 2 },
+  { id: "production-3", title: "Client Book Showcase", category: "Client Showcase", youtubeUrl: "", displayOrder: 3 },
+  { id: "production-4", title: "Creative Promotion", category: "Promotions", youtubeUrl: "", displayOrder: 4 },
+  { id: "production-5", title: "Author Story Trailer", category: "Book Trailers", youtubeUrl: "", displayOrder: 5 },
+  { id: "production-6", title: "Learning Through Story", category: "Educational Stories", youtubeUrl: "", displayOrder: 6 },
+  { id: "production-7", title: "Selected Client Production", category: "Client Showcase", youtubeUrl: "", displayOrder: 7 },
+  { id: "production-8", title: "Danajet Promotional Film", category: "Promotions", youtubeUrl: "", displayOrder: 8 },
+  { id: "production-9", title: "New Book Trailer", category: "Book Trailers", youtubeUrl: "", displayOrder: 9 },
+  { id: "production-10", title: "Educational Documentary", category: "Educational Stories", youtubeUrl: "", displayOrder: 10 },
 ];
 
 const testimonials = [
@@ -613,6 +712,15 @@ function BrandMark({ light = false }) {
   );
 }
 
+function LoadingSpinner({ label = "Loading" }) {
+  return (
+    <div className="loading-spinner-wrap" role="status" aria-live="polite">
+      <span className="loading-spinner" aria-hidden="true" />
+      <span className="sr-only">{label}</span>
+    </div>
+  );
+}
+
 async function addToCart(product, quantity = 1) {
   await addCartItem(product, quantity);
 }
@@ -677,6 +785,7 @@ function useScrollReveal() {
 }
 
 function Header() {
+  const themeStorageKey = "danajet-theme-v2";
   const [isOpen, setIsOpen] = useState(false);
   const [openMobileDropdown, setOpenMobileDropdown] = useState(null);
   const [isAccountMenuOpen, setIsAccountMenuOpen] = useState(false);
@@ -684,8 +793,8 @@ function Header() {
   const [authUser, setAuthUser] = useState(null);
   const accountMenuRef = useRef(null);
   const [theme, setTheme] = useState(() => {
-    if (typeof window === "undefined") return "dark";
-    return localStorage.getItem("danajet-theme") || "dark";
+    if (typeof window === "undefined") return "light";
+    return localStorage.getItem(themeStorageKey) || "light";
   });
 
   useEffect(() => {
@@ -723,7 +832,7 @@ function Header() {
 
   useEffect(() => {
     document.documentElement.dataset.theme = theme;
-    localStorage.setItem("danajet-theme", theme);
+    localStorage.setItem(themeStorageKey, theme);
   }, [theme]);
 
   useEffect(() => {
@@ -905,6 +1014,7 @@ function BookCover({ book, index }) {
   const uploadedImage = book.imageUrl || book.galleryImages?.[0];
   const subtitle = book.mark || book.description || book.subtitle || "";
   const author = book.author || "Danajet BookLab";
+  const detailsHref = book.slug ? `/shop/${encodeURIComponent(book.slug)}` : "/shop";
   const amazonHref = book.amazonUrl || book.amazon_url || book.externalUrl || book.external_url || "/shop";
 
   return (
@@ -930,19 +1040,110 @@ function BookCover({ book, index }) {
           <p>{subtitle}</p>
         </div>
         <div className="book-actions">
-          <a href="/request-project">Order from me <ArrowRight size={15} /></a>
-          <a href={amazonHref}>Shop on Amazon <ExternalLink size={14} /></a>
+          <a href={detailsHref}>Order from me <ArrowRight size={15} /></a>
+          <a href={amazonHref}>Buy on Amazon <ExternalLink size={14} /></a>
         </div>
       </div>
     </article>
   );
 }
 
-function formatPrice(product) {
-  return new Intl.NumberFormat("en-US", {
+const STORE_CURRENCY_KEY = "danajet-store-currency";
+const STORE_RATES_KEY = "danajet-store-currency-rates";
+let currencyRates = { USD: 1, NGN: 1600, GBP: 0.79, EUR: 0.92, CAD: 1.37, AUD: 1.52 };
+const currencyLocales = { USD: "en-US", NGN: "en-NG", GBP: "en-GB", EUR: "de-DE", CAD: "en-CA", AUD: "en-AU" };
+let currencyRatesRequest;
+
+async function refreshCurrencyRates() {
+  if (currencyRatesRequest || typeof window === "undefined") return currencyRatesRequest;
+  currencyRatesRequest = (async () => {
+    try {
+      const cached = JSON.parse(window.localStorage.getItem(STORE_RATES_KEY) || "null");
+      if (cached?.rates && Date.now() - cached.savedAt < 12 * 60 * 60 * 1000) {
+        currencyRates = { ...currencyRates, ...cached.rates, USD: 1 };
+        return;
+      }
+      const response = await fetch("https://open.er-api.com/v6/latest/USD");
+      if (!response.ok) return;
+      const data = await response.json();
+      const supportedRates = Object.fromEntries(Object.keys(currencyRates).map((code) => [code, data.rates?.[code] || currencyRates[code]]));
+      currencyRates = { ...currencyRates, ...supportedRates, USD: 1 };
+      window.localStorage.setItem(STORE_RATES_KEY, JSON.stringify({ rates: supportedRates, savedAt: Date.now() }));
+      window.dispatchEvent(new Event("danajet-rates-changed"));
+    } catch {
+      // Keep the built-in fallback rates when live rates are unavailable.
+    }
+  })();
+  return currencyRatesRequest;
+}
+
+function detectLocalCurrency() {
+  if (typeof window === "undefined") return "USD";
+  const saved = window.localStorage.getItem(STORE_CURRENCY_KEY);
+  if (saved && currencyRates[saved]) return saved;
+  const region = (navigator.language || "en-US").split("-")[1]?.toUpperCase();
+  if (region === "NG") return "NGN";
+  if (region === "GB") return "GBP";
+  if (region === "CA") return "CAD";
+  if (region === "AU") return "AUD";
+  if (["AT", "BE", "DE", "ES", "FI", "FR", "IE", "IT", "NL", "PT"].includes(region)) return "EUR";
+  return "USD";
+}
+
+function useCurrency() {
+  const [currency, setCurrencyState] = useState(detectLocalCurrency);
+  const [, setRatesVersion] = useState(0);
+  useEffect(() => {
+    const syncCurrency = (event) => setCurrencyState(event.detail || detectLocalCurrency());
+    const syncRates = () => setRatesVersion((version) => version + 1);
+    window.addEventListener("danajet-currency-changed", syncCurrency);
+    window.addEventListener("danajet-rates-changed", syncRates);
+    refreshCurrencyRates();
+    return () => {
+      window.removeEventListener("danajet-currency-changed", syncCurrency);
+      window.removeEventListener("danajet-rates-changed", syncRates);
+    };
+  }, []);
+  const setCurrency = (nextCurrency) => {
+    window.localStorage.setItem(STORE_CURRENCY_KEY, nextCurrency);
+    setCurrencyState(nextCurrency);
+    window.dispatchEvent(new CustomEvent("danajet-currency-changed", { detail: nextCurrency }));
+  };
+  return [currency, setCurrency];
+}
+
+function convertCurrency(amount, fromCurrency = "USD", toCurrency = "USD") {
+  const fromRate = currencyRates[fromCurrency] || 1;
+  const toRate = currencyRates[toCurrency] || 1;
+  return (Number(amount) / fromRate) * toRate;
+}
+
+function formatMoney(amount, currency = "USD", fromCurrency = "USD") {
+  return new Intl.NumberFormat(currencyLocales[currency] || "en-US", {
     style: "currency",
-    currency: product.currency || "USD",
-  }).format(Number(product.price));
+    currency,
+    maximumFractionDigits: currency === "NGN" ? 0 : 2,
+  }).format(convertCurrency(amount, fromCurrency, currency));
+}
+
+function formatPrice(product, currency = product.currency || "USD") {
+  return formatMoney(product.price, currency, product.currency || "USD");
+}
+
+function CurrencySelector({ className = "" }) {
+  const [currency, setCurrency] = useCurrency();
+  return (
+    <label className={`currency-selector ${className}`.trim()}>
+      <span>Currency:</span>
+      <select value={currency} onChange={(event) => setCurrency(event.target.value)} aria-label="Select display currency">
+        {Object.keys(currencyRates).map((code) => <option value={code} key={code}>{code}</option>)}
+      </select>
+    </label>
+  );
+}
+
+function getAmazonHref(product) {
+  return product.amazonUrl || product.amazon_url || product.externalUrl || product.external_url || "https://www.amazon.com/author/danielthebooksmith";
 }
 
 function ProductArtwork({ product, view = "front" }) {
@@ -974,6 +1175,7 @@ function ProductArtwork({ product, view = "front" }) {
 
 function ShopProductCard({ product }) {
   const [added, setAdded] = useState(false);
+  const [currency] = useCurrency();
 
   const handleAdd = async () => {
     await addToCart(product);
@@ -997,14 +1199,15 @@ function ShopProductCard({ product }) {
         </div>
         <div className="product-card-bottom">
           <div className="product-price">
-            <strong>{formatPrice(product)}</strong>
-            {product.compare_at_price && <del>${product.compare_at_price}</del>}
+            <strong>{formatPrice(product, currency)}</strong>
+            {product.compare_at_price && <del>{formatMoney(product.compare_at_price, currency, product.currency || "USD")}</del>}
           </div>
           <button type="button" onClick={handleAdd} aria-label={`Add ${product.title} to bag`}>
             {added ? <PackageCheck size={17} /> : <ShoppingBag size={17} />}
             <span>{added ? "Added" : "Add to Cart"}</span>
           </button>
         </div>
+        <a className="product-amazon-link" href={getAmazonHref(product)} target="_blank" rel="noopener noreferrer"><span className="amazon-package-icon" aria-hidden="true">📦</span> Buy on Amazon</a>
       </div>
     </article>
   );
@@ -1032,10 +1235,24 @@ function getAllCourses() {
   ));
 }
 
+function CourseVideoThumbnail({ src, className = "" }) {
+  const videoRef = useRef(null);
+  const showPreviewFrame = () => {
+    const video = videoRef.current;
+    if (!video || !Number.isFinite(video.duration) || video.duration <= 0) return;
+    video.currentTime = Math.min(1, Math.max(.1, video.duration * .08));
+  };
+  return <video ref={videoRef} className={className} src={resolveMediaUrl(src)} muted playsInline preload="auto" onLoadedMetadata={showPreviewFrame} aria-hidden="true" />;
+}
+
 function CourseWaitlistCard({ course }) {
   const [added, setAdded] = useState(false);
   const { courseTitle, courseSubtitle, displayPrice, rating, slug } = course;
   const courseHref = `/courses/${slug}`;
+  const isFreeResource = course.category === "Templates & Resources";
+  const availabilityLabel = isFreeResource && String(course.status || "").toLowerCase() === "available now"
+    ? "Available Now"
+    : "Coming Soon";
   const product = {
     id: course.id,
     item_type: "course",
@@ -1054,26 +1271,43 @@ function CourseWaitlistCard({ course }) {
   return (
     <article className="course-product-card">
       <a className="course-thumbnail" href={courseHref} aria-label={`Preview ${courseTitle}`}>
-        {course.thumbnailUrl ? <img src={resolveMediaUrl(course.thumbnailUrl)} alt="" /> : <span className="course-thumbnail-accent" />}
-        <span className="course-play-button"><Play size={32} fill="currentColor" /></span>
+        {course.thumbnailUrl ? (
+          <img src={resolveMediaUrl(course.thumbnailUrl)} alt={`${courseTitle} thumbnail`} />
+        ) : course.videoSrc ? (
+          <CourseVideoThumbnail src={course.videoSrc} className="course-thumbnail-video" />
+        ) : (
+          <span className="course-thumbnail-accent" />
+        )}
+        {!isFreeResource && <span className="course-play-button"><Play size={32} fill="currentColor" /></span>}
       </a>
       <h3><a href={courseHref}>{courseTitle}</a></h3>
       <strong className="course-subtitle">{courseSubtitle}</strong>
-      <p className="course-card-meta">Danajet Academy <span>Coming Soon</span></p>
-      <div className="course-rating">
-        <span>{rating}</span>
-        <span className="course-stars"><Star size={12} /><Star size={12} /><Star size={12} /><Star size={12} /><Star size={12} /></span>
-        <span>(Coming soon)</span>
-      </div>
-      <div className="course-product-bottom">
-        <div className="course-price">
-          <strong>${displayPrice}</strong>
-          <del>${course.compare_at_price || "49.00"}</del>
+      <p className="course-card-meta">Danajet Academy <span>{availabilityLabel}</span></p>
+      {!isFreeResource && (
+        <div className="course-rating">
+          <span>{rating}</span>
+          <span className="course-stars"><Star size={12} /><Star size={12} /><Star size={12} /><Star size={12} /><Star size={12} /></span>
+          <span>(Coming soon)</span>
         </div>
-        <button type="button" onClick={handleAdd} aria-label={`Add ${courseTitle} to cart`}>
-          {added ? <PackageCheck size={17} /> : <ShoppingBag size={17} />}
-          <span>{added ? "Added" : "Add to Cart"}</span>
-        </button>
+      )}
+      <div className="course-product-bottom">
+        {isFreeResource ? (
+          <>
+            <strong className="free-resource-label">FREE RESOURCE</strong>
+            <a className="free-resource-card-action" href={courseHref}><Download size={17} /> GET FREE DOWNLOAD</a>
+          </>
+        ) : (
+          <>
+            <div className="course-price">
+              <strong>${displayPrice}</strong>
+              <del>${course.compare_at_price || "49.00"}</del>
+            </div>
+            <button type="button" onClick={handleAdd} aria-label={`Add ${courseTitle} to cart`}>
+              {added ? <PackageCheck size={17} /> : <ShoppingBag size={17} />}
+              <span>{added ? "Added" : "Add to Cart"}</span>
+            </button>
+          </>
+        )}
       </div>
     </article>
   );
@@ -1146,7 +1380,7 @@ function CourseCatalog({ showHeading = true }) {
         ))}
       </div>
       <div className="course-category-stack">
-        {isLoading && <div className="cart-empty"><h2>Loading courses.</h2></div>}
+        {isLoading && <div className="cart-empty"><LoadingSpinner label="Loading courses" /></div>}
         {!isLoading && visibleCategories.length === 0 && <div className="cart-empty"><h2>No courses found.</h2></div>}
         {visibleCategories.map((category) => {
           return (
@@ -1330,6 +1564,7 @@ function ShopPage() {
                 <Search size={18} />
                 <input value={searchTerm} onChange={(event) => setSearchTerm(event.target.value)} placeholder="Search books" />
               </label>
+              <CurrencySelector />
               <select value={sortBy} onChange={(event) => setSortBy(event.target.value)} aria-label="Sort products">
                 <option value="featured">Featured</option>
                 <option value="price-low">Price: low to high</option>
@@ -1338,7 +1573,7 @@ function ShopPage() {
               </select>
             </div>
             <div className="shop-grid">
-              {isLoading && <div className="cart-empty"><h2>Loading books.</h2></div>}
+              {isLoading && <div className="cart-empty"><LoadingSpinner label="Loading books" /></div>}
               {!isLoading && filteredProducts.length === 0 && <div className="cart-empty"><h2>No products found.</h2></div>}
               {filteredProducts.map((product) => <ShopProductCard product={product} key={product.id} />)}
             </div>
@@ -1353,6 +1588,93 @@ function ShopPage() {
       </main>
       <Footer />
     </div>
+  );
+}
+
+function CommunityHub() {
+  const footer = useFooterSettings();
+  const [resourceCourses, setResourceCourses] = useState([]);
+
+  useEffect(() => {
+    let isMounted = true;
+    getCourses()
+      .then((items) => {
+        if (!isMounted) return;
+        const resources = items.filter((item) => item.category === "Templates & Resources");
+        const requestedResource = getAllCourses().find((item) => item.courseTitle === "Free AI YouTube Video Workflow Checklist");
+        setResourceCourses(
+          requestedResource && !resources.some((item) => item.slug === requestedResource.slug)
+            ? [...resources, requestedResource]
+            : resources
+        );
+      })
+      .catch(() => {
+        if (isMounted) {
+          setResourceCourses(getAllCourses().filter((item) => item.category === "Templates & Resources"));
+        }
+      });
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  const facebookHref = footer.facebook || "https://www.facebook.com/share/g/19Bijsrav6/";
+
+  return (
+    <>
+      <section className="section community-hub-section" id="community">
+        <div className="container">
+          <div className="course-more-heading community-hub-heading">
+            <p className="eyebrow">Danajet Community</p>
+            <h2>Learn. Connect. Grow Together.</h2>
+            <p>The Danajet Community is a place for authors, designers, publishers, and creative minds to learn, ask questions, share ideas, and grow together.</p>
+          </div>
+          <div className="course-community-grid">
+            <article className="course-community-card">
+              <div className="course-community-icon"><Facebook /></div>
+              <h3>Facebook Community</h3>
+              <p>Connect with authors, designers, publishers, and other creative minds in the Danajet community.</p>
+              <a className="button" href={facebookHref}>Join the Facebook Community</a>
+            </article>
+            <article className="course-community-card">
+              <div className="course-community-icon"><Youtube /></div>
+              <h3>Media &amp; YouTube</h3>
+              <p>Discover tutorials, book trailers, educational stories, creative productions, and videos from all my YouTube channels.</p>
+              <a className="button button-outline" href="/media">Explore Media</a>
+            </article>
+            <article className="course-community-card">
+              <div className="course-community-icon"><MessageCircle /></div>
+              <h3>WhatsApp Community</h3>
+              <p>Coming soon. Join the waitlist to be the first to know when the WhatsApp community opens.</p>
+              <a className="button button-outline" href="#join-network">Join the Waitlist</a>
+            </article>
+            <article className="course-community-card">
+              <div className="course-community-icon"><BookOpen /></div>
+              <h3>Free Resources</h3>
+              <p>Browse practical templates and resources created to support your publishing and creative workflow.</p>
+              <a className="button" href="#free-resources">Browse Free Resources</a>
+            </article>
+          </div>
+        </div>
+      </section>
+      <section className="section community-resources-section" id="free-resources">
+        <div className="container">
+          <div className="course-more-heading">
+            <p className="eyebrow">Templates &amp; Resources</p>
+            <h2>Browse free resources.</h2>
+          </div>
+          {resourceCourses.length ? (
+            <div className="course-free-resources-row" aria-label="Free templates and resources">
+              {resourceCourses.map((resourceCourse) => (
+                <CourseWaitlistCard course={resourceCourse} key={resourceCourse.id || resourceCourse.slug} />
+              ))}
+            </div>
+          ) : (
+            <p className="community-resources-empty">New free templates and resources are coming soon.</p>
+          )}
+        </div>
+      </section>
+    </>
   );
 }
 
@@ -1372,20 +1694,282 @@ function CoursesPage() {
   );
 }
 
-function CourseDetailPage({ slug }) {
-  const [course, setCourse] = useState(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [added, setAdded] = useState(false);
-  const [isPreviewOpen, setIsPreviewOpen] = useState(false);
+function CommunityPage() {
+  return (
+    <div className="courses-page community-page">
+      <Header />
+      <main>
+        <CommunityHub />
+      </main>
+      <Footer />
+    </div>
+  );
+}
+
+function getYouTubeVideoId(url) {
+  const value = String(url || "").trim();
+  if (!value) return "";
+  const match = value.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?(?:.*&)?v=|embed\/|shorts\/))([A-Za-z0-9_-]{11})/i);
+  return match?.[1] || "";
+}
+
+function MediaPage() {
+  const [channels, setChannels] = useState(mediaChannelDefaults);
+  const [productions, setProductions] = useState(mediaProductionDefaults);
+  const [activeFilter, setActiveFilter] = useState("All");
+  const [activeIndex, setActiveIndex] = useState(null);
+  const categories = ["All", "Book Trailers", "Educational Stories", "Client Showcase", "Promotions"];
 
   useEffect(() => {
     let isMounted = true;
-    getCourse(slug)
-      .then((item) => {
-        if (isMounted) setCourse(item);
+    listAdminSettings()
+      .then((settings) => {
+        if (!isMounted) return;
+        setChannels(getJsonSetting(settings, "collection-media-channels", mediaChannelDefaults));
+        setProductions(getJsonSetting(settings, "collection-media-productions", mediaProductionDefaults));
+      })
+      .catch(() => {});
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  const orderedProductions = [...productions].sort((a, b) => Number(a.displayOrder || 0) - Number(b.displayOrder || 0));
+  const visibleProductions = activeFilter === "All"
+    ? orderedProductions
+    : orderedProductions.filter((item) => item.category === activeFilter);
+  const activeProduction = activeIndex === null ? null : visibleProductions[activeIndex];
+  const activeVideoId = getYouTubeVideoId(activeProduction?.youtubeUrl);
+
+  const moveModal = (direction) => {
+    setActiveIndex((current) => {
+      if (current === null || visibleProductions.length === 0) return null;
+      return (current + direction + visibleProductions.length) % visibleProductions.length;
+    });
+  };
+
+  return (
+    <div className="media-page">
+      <Header />
+      <main>
+        <section className="media-hero">
+          <div className="container media-hero-inner">
+            <p className="eyebrow">Danajet Media</p>
+            <h1>Bringing Stories to Life Through Video</h1>
+            <p>Explore my YouTube channels, book trailers, documentaries, and creative video productions.</p>
+          </div>
+        </section>
+        <section className="section media-channels-section">
+          <div className="container">
+            <SectionHeading eyebrow="Featured YouTube Channels" title="Explore the stories behind every channel." copy="Discover books, education, documentaries, and original creative productions across the Danajet media network." />
+            <div className="media-channel-grid">
+              {channels.map((channel) => (
+                <article className="media-channel-card" key={channel.id || channel.name}>
+                  <div className="media-channel-banner">
+                    {channel.banner ? <img src={resolveMediaUrl(channel.banner)} alt="" /> : <span />}
+                  </div>
+                  <div className="media-channel-logo">
+                    {channel.logo ? <img src={resolveMediaUrl(channel.logo)} alt={`${channel.name} logo`} /> : <Youtube />}
+                  </div>
+                  <h2>{channel.name}</h2>
+                  <p>{channel.description}</p>
+                  {channel.status === "coming-soon" || !channel.url ? (
+                    <button className="button button-outline" type="button" disabled>Launching Soon</button>
+                  ) : (
+                    <a className="button" href={channel.url} target="_blank" rel="noopener noreferrer">Visit Channel <ExternalLink size={16} /></a>
+                  )}
+                </article>
+              ))}
+            </div>
+          </div>
+        </section>
+        <section className="section media-productions-section">
+          <div className="container">
+            <div className="media-productions-heading">
+              <SectionHeading eyebrow="Featured Productions" title="Watch selected video productions." copy="Filter the collection and open any production without leaving the page." />
+              <div className="media-filter-row" aria-label="Filter featured productions">
+                {categories.map((category) => (
+                  <button className={activeFilter === category ? "is-active" : ""} type="button" onClick={() => { setActiveFilter(category); setActiveIndex(null); }} key={category}>{category}</button>
+                ))}
+              </div>
+            </div>
+            <div className="media-production-grid">
+              {visibleProductions.map((production, index) => {
+                const videoId = getYouTubeVideoId(production.youtubeUrl);
+                return (
+                  <button className="media-production-card" type="button" onClick={() => videoId && setActiveIndex(index)} disabled={!videoId} key={production.id || `${production.title}-${index}`}>
+                    <span className="media-production-thumbnail">
+                      {videoId ? <img src={`https://i.ytimg.com/vi/${videoId}/hqdefault.jpg`} alt="" /> : <span className="media-production-placeholder"><Video size={34} /></span>}
+                      <span className="media-production-play"><Play size={26} fill="currentColor" /></span>
+                    </span>
+                    <strong>{production.title}</strong>
+                    <small>{production.category}</small>
+                  </button>
+                );
+              })}
+            </div>
+            <div className="media-view-more">
+              <a className="button" href="https://www.youtube.com/@danielthebooksmith" target="_blank" rel="noopener noreferrer">View More on YouTube <Youtube /></a>
+            </div>
+          </div>
+        </section>
+      </main>
+      <Footer />
+      {activeProduction && activeVideoId && (
+        <div className="media-video-modal" role="dialog" aria-modal="true" aria-label={activeProduction.title}>
+          <button className="lightbox-backdrop" type="button" onClick={() => setActiveIndex(null)} aria-label="Close video" />
+          <div className="media-video-modal-card">
+            <button className="media-video-close" type="button" onClick={() => setActiveIndex(null)} aria-label="Close"><X size={23} /></button>
+            <div className="media-video-frame">
+              <iframe src={`https://www.youtube.com/embed/${activeVideoId}?autoplay=1&rel=0`} title={activeProduction.title} allow="autoplay; encrypted-media; picture-in-picture" allowFullScreen />
+            </div>
+            <div className="media-video-modal-footer">
+              <button type="button" onClick={() => moveModal(-1)} aria-label="Previous video"><ChevronLeft size={24} /></button>
+              <h2>{activeProduction.title}</h2>
+              <button type="button" onClick={() => moveModal(1)} aria-label="Next video"><ChevronRight size={24} /></button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function FreeResourceDetailPage({ resource }) {
+  const [isFormOpen, setIsFormOpen] = useState(false);
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isReady, setIsReady] = useState(false);
+  const [error, setError] = useState("");
+  const isAvailable = String(resource.status || "").toLowerCase() === "available now";
+  const included = resource.resources?.length
+    ? resource.resources
+    : resource.outcomes?.length
+      ? resource.outcomes
+      : ["A practical step-by-step guide", "A reusable publishing checklist", "Clear action points and helpful notes"];
+  const fileType = resource.metadata?.file_type || resource.fileType || "PDF";
+  const downloadUrl = resource.access_url || resource.embed_url || resource.downloadUrl || "";
+
+  const handleDownloadRequest = async (event) => {
+    event.preventDefault();
+    setError("");
+    setIsSubmitting(true);
+    try {
+      const response = await requestFreeResourceDownload(resource.slug, { name, email });
+      setIsReady(true);
+      const readyUrl = response.download_url || downloadUrl;
+      if (readyUrl) {
+        const downloadLink = document.createElement("a");
+        downloadLink.href = resolveMediaUrl(readyUrl);
+        downloadLink.download = "";
+        downloadLink.rel = "noopener";
+        document.body.appendChild(downloadLink);
+        downloadLink.click();
+        downloadLink.remove();
+      }
+    } catch (requestError) {
+      setError(requestError.message || "Unable to prepare your download right now.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  return (
+    <div className="courses-page free-resource-page">
+      <Header />
+      <main>
+        <section className="section free-resource-detail">
+          <div className="container free-resource-detail-grid">
+            <div className="free-resource-preview">
+              {resource.thumbnailUrl ? (
+                <img src={resolveMediaUrl(resource.thumbnailUrl)} alt={`${resource.courseTitle} preview`} />
+              ) : (
+                <div className="free-resource-preview-placeholder">
+                  <FileText size={54} />
+                  <span>{fileType} RESOURCE</span>
+                </div>
+              )}
+            </div>
+            <div className="free-resource-copy">
+              <a className="portfolio-back academy-back" href="/community#free-resources"><ArrowRight size={16} /> Back to Templates &amp; Resources</a>
+              <p className="eyebrow">Free Resource</p>
+              <h1>{resource.courseTitle}</h1>
+              <p className="free-resource-description">{resource.courseSubtitle || resource.summary}</p>
+              <span className="free-resource-status">{isAvailable ? "Available Now" : "Coming Soon"}</span>
+              <div className="free-resource-includes">
+                <h2>What is included</h2>
+                {included.map((item, index) => (
+                  <span key={`${index}-${String(item)}`}><PackageCheck size={17} /> {typeof item === "string" ? item : item.title || item.name}</span>
+                ))}
+              </div>
+              <p className="free-resource-file-type"><strong>File type:</strong> {fileType}</p>
+              <button className="button" type="button" disabled={!isAvailable} onClick={() => setIsFormOpen(true)}>
+                <Download size={18} /> Download Now
+              </button>
+              {!isAvailable && <small>The download will be enabled when this resource is marked “Available Now.”</small>}
+            </div>
+          </div>
+        </section>
+      </main>
+      <Footer />
+      {isFormOpen && (
+        <div className="free-download-modal" role="dialog" aria-modal="true" aria-label={`Download ${resource.courseTitle}`}>
+          <button className="lightbox-backdrop" type="button" onClick={() => setIsFormOpen(false)} aria-label="Close download form" />
+          <div className="free-download-modal-card">
+            <button className="free-download-close" type="button" onClick={() => setIsFormOpen(false)} aria-label="Close"><X size={22} /></button>
+            {isReady ? (
+              <div className="free-download-confirmation">
+                <PackageCheck size={42} />
+                <h2>Your download is ready!</h2>
+                <p>Thank you for downloading this free resource. We hope it helps you on your publishing journey. Be sure to join the Danajet Network for more books, tutorials, templates, free resources, and exclusive updates.</p>
+              </div>
+            ) : (
+              <form onSubmit={handleDownloadRequest}>
+                <p className="eyebrow">Free Download</p>
+                <h2>Where should we send your resource?</h2>
+                <label>Name <span>(optional)</span><input value={name} onChange={(event) => setName(event.target.value)} /></label>
+                <label>Email Address<input type="email" value={email} onChange={(event) => setEmail(event.target.value)} required /></label>
+                {error && <p className="form-error">{error}</p>}
+                <button className="button" type="submit" disabled={isSubmitting}>{isSubmitting ? "Preparing Download" : "Get My Free Download"}</button>
+              </form>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function CourseDetailPage({ slug }) {
+  const [course, setCourse] = useState(null);
+  const [relatedCourses, setRelatedCourses] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [added, setAdded] = useState(false);
+  const [isPreviewOpen, setIsPreviewOpen] = useState(false);
+  const defaultCourseOutcomes = [
+    "Recorded video lessons",
+    "Live tutorial sessions",
+    "Downloadable workflow resources",
+    "Practical templates and examples",
+    "Troubleshooting guidance",
+    "Future course updates",
+  ];
+
+  useEffect(() => {
+    let isMounted = true;
+    Promise.all([getCourse(slug), getCourses()])
+      .then(([item, items]) => {
+        if (!isMounted) return;
+        setCourse(item);
+        const sameSection = items.filter((candidate) => candidate.id !== item.id && candidate.category === item.category);
+        const otherSections = items.filter((candidate) => candidate.id !== item.id && candidate.category !== item.category);
+        setRelatedCourses([...sameSection, ...otherSections].slice(0, 6));
       })
       .catch(() => {
-        if (isMounted) setCourse(null);
+        if (isMounted) {
+          setCourse(getAllCourses().find((item) => item.slug === slug) || null);
+        }
       })
       .finally(() => {
         if (isMounted) setIsLoading(false);
@@ -1400,7 +1984,7 @@ function CourseDetailPage({ slug }) {
       <div className="courses-page">
         <Header />
         <main className="product-not-found">
-          <h1>Loading course.</h1>
+          <LoadingSpinner label="Loading course" />
         </main>
         <Footer />
       </div>
@@ -1418,6 +2002,10 @@ function CourseDetailPage({ slug }) {
         <Footer />
       </div>
     );
+  }
+
+  if (course.category === "Templates & Resources") {
+    return <FreeResourceDetailPage resource={course} />;
   }
 
   const handleAdd = async () => {
@@ -1462,7 +2050,11 @@ function CourseDetailPage({ slug }) {
             <div className="course-preview-panel">
               {course.videoSrc ? (
                 <button className="course-preview-trigger" type="button" onClick={() => setIsPreviewOpen(true)} aria-label={`Preview ${course.courseTitle}`}>
-                  <video src={course.videoSrc} muted preload="metadata" tabIndex="-1" />
+                  {course.thumbnailUrl ? (
+                    <img className="course-preview-poster" src={resolveMediaUrl(course.thumbnailUrl)} alt={`${course.courseTitle} preview`} />
+                  ) : (
+                    <CourseVideoThumbnail src={course.videoSrc} className="course-preview-video-frame" />
+                  )}
                   <div className="course-preview-overlay" aria-hidden="true">
                     <span><Play size={40} fill="currentColor" /></span>
                     <strong>Preview this course</strong>
@@ -1502,16 +2094,11 @@ function CourseDetailPage({ slug }) {
         <section className="section course-detail-body">
           <div className="container course-detail-body-grid">
             <div className="course-learn-panel">
-              <h2>What you'll learn</h2>
+              <p className="eyebrow course-learn-heading">What you'll learn</p>
               <div className="course-learn-list">
-                <span><PackageCheck size={16} /> <span><strong>Project 1: Career Digital Twin.</strong> Build and deploy your own Agent to represent you to potential future employers.</span></span>
-                <span><PackageCheck size={16} /> <span><strong>Project 2: SDR Agent.</strong> An instant business application: create Sales Representatives that craft and send professional emails.</span></span>
-                <span><PackageCheck size={16} /> <span><strong>Project 3: Deep Research.</strong> Make your own version of the essential Agentic use case: a team of Agents that carry out extensive research on any topic you choose.</span></span>
-                <span><PackageCheck size={16} /> <span><strong>Project 4:</strong> Build a Stock Picker Agent in minutes with CrewAI - automate your search for investment gems!</span></span>
-                <span><PackageCheck size={16} /> <span><strong>Project 5:</strong> Deploy your own 4-Agent Engineering Team - manage, build, and test software apps with CrewAI and Coder Agents in Docker!</span></span>
-                <span><PackageCheck size={16} /> <span><strong>Project 6:</strong> Build your own version of OpenAI's Operator Agent - your Sidekick works with you inside your browser via LangGraph!</span></span>
-                <span><PackageCheck size={16} /> <span><strong>Project 7: Agent Creator</strong> - an Agent that builds and launches new Agents using AutoGen, unlocking endless AI possibilities!</span></span>
-                <span><PackageCheck size={16} /> <span><strong>Project 8: Capstone</strong> - build a Trading Floor with 4 Agents making autonomous trades, powered by 6 MCP servers and 44 tools!</span></span>
+                {(course.outcomes?.length ? course.outcomes : defaultCourseOutcomes).map((outcome) => (
+                  <span key={outcome}><PackageCheck size={16} /> <span>{outcome}</span></span>
+                ))}
               </div>
             </div>
             <aside className="course-includes-panel">
@@ -1520,16 +2107,18 @@ function CourseDetailPage({ slug }) {
               <span><FileText size={18} /> 14 articles</span>
               <span><MonitorPlay size={18} /> Access on mobile and TV</span>
               <span><PackageCheck size={18} /> Certificate of completion</span>
-              <a href="#related-topics">Explore related topics <ArrowRight size={16} /></a>
             </aside>
-            <div className="course-related-topics" id="related-topics">
-              <p className="eyebrow">Explore related topics</p>
-              <span>Agentic AI</span>
-              <span>CrewAI</span>
-              <span>LangGraph</span>
-              <span>AutoGen</span>
-              <span>MCP Servers</span>
-            </div>
+            {relatedCourses.length > 0 && (
+              <section className="course-more-section" id="more-courses">
+                <div className="course-more-heading">
+                  <p className="eyebrow">Explore More Courses & Tutorials</p>
+                  <h2>Continue learning across Danajet Academy.</h2>
+                </div>
+                <div className="course-product-grid">
+                  {relatedCourses.map((relatedCourse) => <CourseWaitlistCard course={relatedCourse} key={relatedCourse.id || relatedCourse.slug} />)}
+                </div>
+              </section>
+            )}
           </div>
         </section>
       </main>
@@ -1546,6 +2135,7 @@ function ProductDetailPage({ slug }) {
   const [quantity, setQuantity] = useState(1);
   const [activeView, setActiveView] = useState("front");
   const [added, setAdded] = useState(false);
+  const [currency] = useCurrency();
 
   useEffect(() => {
     let isMounted = true;
@@ -1584,7 +2174,7 @@ function ProductDetailPage({ slug }) {
 
   if (isLoading) {
     return (
-      <div><Header /><main className="product-not-found"><h1>Loading book.</h1></main><Footer /></div>
+      <div><Header /><main className="product-not-found"><LoadingSpinner label="Loading book" /></main><Footer /></div>
     );
   }
 
@@ -1626,9 +2216,10 @@ function ProductDetailPage({ slug }) {
               <a href="#reviews">{product.review_count} reviews</a>
             </div>
             <div className="product-detail-price">
-              <strong>{formatPrice(product)}</strong>
-              {product.compare_at_price && <del>${product.compare_at_price}</del>}
+              <strong>{formatPrice(product, currency)}</strong>
+              {product.compare_at_price && <del>{formatMoney(product.compare_at_price, currency, product.currency || "USD")}</del>}
             </div>
+            <CurrencySelector className="product-currency-selector" />
             <p className="product-description">{product.description}</p>
             <div className="product-purchase">
               <div className="quantity-control" aria-label="Quantity">
@@ -1640,6 +2231,7 @@ function ProductDetailPage({ slug }) {
                 {added ? <PackageCheck size={18} /> : <ShoppingBag size={18} />}
                 <span>{added ? "Added" : "Add to Cart"}</span>
               </button>
+              <a className="button product-amazon-button" href={getAmazonHref(product)} target="_blank" rel="noopener noreferrer"><span className="amazon-package-icon" aria-hidden="true">📦</span> Buy on Amazon</a>
             </div>
             <div className="product-stock"><span /> In stock and ready to ship</div>
             <div className="product-feature-list">
@@ -1650,14 +2242,14 @@ function ProductDetailPage({ slug }) {
 
         <section className="product-story-band">
           <div className="container">
-            <div><p className="eyebrow">Inside the book</p><h2>Made to feel useful, welcoming, and worth returning to.</h2></div>
+            <div><p className="eyebrow">Inside the book</p><h2>Created with care. Designed to <span className="story-difference">make a difference</span><span className="story-stop">.</span></h2></div>
             <div className="product-spread"><ProductArtwork product={product} view="detail" /></div>
           </div>
         </section>
 
         <section className="section related-products">
           <div className="container">
-            <div className="shop-catalog-heading"><div><p className="eyebrow">You may also like</p><h2>Keep exploring.</h2></div><a className="text-link" href="/shop">View all books <ArrowRight /></a></div>
+            <div className="shop-catalog-heading"><div><p className="eyebrow">You may also like</p><h2>Keep <span className="exploring-word">exploring</span><span className="story-stop">.</span></h2></div><a className="text-link" href="/shop">View all books <ArrowRight /></a></div>
             <div className="shop-grid">{related.map((item) => <ShopProductCard product={item} key={item.id} />)}</div>
           </div>
         </section>
@@ -1831,6 +2423,7 @@ function LoginPage() {
 function CartPage() {
   const [cart, setCart] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [currency] = useCurrency();
   const subtotal = cart.reduce((total, item) => total + Number(item.price || 0) * item.quantity, 0);
   const estimatedShipping = cart.length ? 5.99 : 0;
   const estimatedTotal = subtotal + estimatedShipping;
@@ -1877,7 +2470,7 @@ function CartPage() {
         <section className="cart-hero">
           <div className="container cart-hero-inner">
             <h1><ShoppingBag size={34} /> Shopping Bag</h1>
-            <span>{cart.reduce((total, item) => total + item.quantity, 0)} items</span>
+            <div className="cart-hero-tools"><span>{cart.reduce((total, item) => total + item.quantity, 0)} items</span><CurrencySelector /></div>
           </div>
         </section>
 
@@ -1886,8 +2479,7 @@ function CartPage() {
             <div className="cart-items" aria-label="Shopping bag items">
               {isLoading ? (
                 <div className="cart-empty">
-                  <ShoppingBag size={34} />
-                  <h2>Loading your shopping bag.</h2>
+                  <LoadingSpinner label="Loading your shopping bag" />
                 </div>
               ) : cart.length ? (
                 cart.map((item) => (
@@ -1899,7 +2491,7 @@ function CartPage() {
                       <p>{item.category_label}</p>
                       <h2>{item.title}</h2>
                       {item.subtitle && <span>{item.subtitle}</span>}
-                      <strong>{formatPrice(item)}</strong>
+                      <strong>{formatPrice(item, currency)}</strong>
                     </div>
                     <div className="cart-item-controls">
                       <div className="quantity-control" aria-label={`Quantity for ${item.title}`}>
@@ -1925,9 +2517,9 @@ function CartPage() {
 
             <aside className="cart-summary">
               <p className="eyebrow">Order summary</p>
-              <div><span>Subtotal</span><strong>${subtotal.toFixed(2)}</strong></div>
-              <div><span>Estimated shipping</span><strong>{estimatedShipping ? `$${estimatedShipping.toFixed(2)}` : "$0.00"}</strong></div>
-              <div className="cart-total"><span>Estimated total</span><strong>${estimatedTotal.toFixed(2)}</strong></div>
+              <div><span>Subtotal</span><strong>{formatMoney(subtotal, currency)}</strong></div>
+              <div><span>Estimated shipping</span><strong>{formatMoney(estimatedShipping, currency)}</strong></div>
+              <div className="cart-total"><span>Estimated total</span><strong>{formatMoney(estimatedTotal, currency)}</strong></div>
               <a className={`button ${!cart.length ? "is-disabled" : ""}`} href={cart.length ? "/checkout" : undefined} aria-disabled={!cart.length}>Checkout <ArrowRight size={17} /></a>
               <a className="button button-outline continue-shopping-button" href="/shop">Continue Shopping <ArrowRight size={17} /></a>
               {cart.length > 0 && <button className="cart-clear-button" type="button" onClick={handleClear}>Clear Shopping Bag</button>}
@@ -1942,11 +2534,15 @@ function CartPage() {
 
 function CheckoutPage() {
   const [cart, setCart] = useState([]);
-  const [isSubmitted, setIsSubmitted] = useState(false);
+  const [checkoutStep, setCheckoutStep] = useState("details");
   const [orderNumber, setOrderNumber] = useState("");
+  const [placedOrder, setPlacedOrder] = useState(null);
+  const [customerDetails, setCustomerDetails] = useState(null);
   const [checkoutError, setCheckoutError] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [currency] = useCurrency();
+  const footerSettings = useFooterSettings();
   const subtotal = cart.reduce((total, item) => total + Number(item.price || 0) * item.quantity, 0);
   const estimatedShipping = cart.length ? 5.99 : 0;
   const estimatedTotal = subtotal + estimatedShipping;
@@ -1973,37 +2569,54 @@ function CheckoutPage() {
     };
   }, []);
 
-  const handleSubmit = async (event) => {
+  const handleDetailsSubmit = (event) => {
     event.preventDefault();
     const formData = new FormData(event.currentTarget);
+    setCustomerDetails({
+      email: formData.get("email"),
+      phone: formData.get("phone") || "",
+      first_name: formData.get("firstName"),
+      last_name: formData.get("lastName"),
+      country: formData.get("country") || "",
+      notes: formData.get("notes") || "",
+      shipping_total: "0.00",
+      shipping_address: {
+        country: formData.get("country") || "",
+      },
+    });
+    setCheckoutStep("payment");
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  const submitPaymentChoice = async (paymentMethod) => {
+    if (!customerDetails) return;
     setCheckoutError("");
     setIsSubmitting(true);
     try {
+      const displayCurrency = paymentMethod === "bank_transfer_ng" ? "NGN" : currency;
       const order = await submitCheckout({
-        email: formData.get("email"),
-        phone: formData.get("phone") || "",
-        first_name: formData.get("firstName"),
-        last_name: formData.get("lastName"),
-        notes: formData.get("notes") || "",
-        shipping_total: estimatedShipping.toFixed(2),
-        shipping_address: {
-          address: formData.get("address"),
-          city: formData.get("city"),
-          state: formData.get("state"),
-          postal_code: formData.get("postalCode"),
-          country: formData.get("country"),
-        },
+        ...customerDetails,
+        payment_method: paymentMethod,
+        display_currency: displayCurrency,
+        display_total: convertCurrency(estimatedTotal, "USD", displayCurrency).toFixed(2),
       });
       setOrderNumber(order.order_number || "");
-      setCart([]);
-      setIsSubmitted(true);
+      setPlacedOrder(order);
+      setCheckoutStep(paymentMethod === "bank_transfer_ng" ? "bank" : "complete");
       window.dispatchEvent(new Event("danajet-cart-updated"));
+      window.scrollTo({ top: 0, behavior: "smooth" });
     } catch (apiError) {
       setCheckoutError(apiError.message || "Please check your order details and try again.");
     } finally {
       setIsSubmitting(false);
     }
   };
+
+  const whatsappMessage = `Hello Danajet, I have completed payment for Order ${orderNumber}. I would like to send my payment receipt for confirmation.`;
+  const whatsappDigits = String(footerSettings.whatsapp || "").replace(/\D/g, "");
+  const whatsappReceiptHref = whatsappDigits.length >= 7
+    ? `https://wa.me/${whatsappDigits}?text=${encodeURIComponent(whatsappMessage)}`
+    : `/contact#whatsapp`;
 
   return (
     <div className="checkout-page">
@@ -2012,7 +2625,7 @@ function CheckoutPage() {
         <section className="cart-hero checkout-hero">
           <div className="container cart-hero-inner">
             <h1><ShoppingBag size={34} /> Checkout</h1>
-            <span>{itemCount} items</span>
+            <div className="cart-hero-tools"><span>{itemCount} items</span><CurrencySelector /></div>
           </div>
         </section>
 
@@ -2020,25 +2633,96 @@ function CheckoutPage() {
           <div className="container checkout-layout">
             {isLoading ? (
               <div className="cart-empty checkout-empty">
-                <ShoppingBag size={34} />
-                <h2>Loading checkout.</h2>
+                <LoadingSpinner label="Loading checkout" />
               </div>
-            ) : cart.length || isSubmitted ? (
+            ) : cart.length || placedOrder ? (
               <>
-                <form className="checkout-form" onSubmit={handleSubmit}>
-                  {isSubmitted ? (
+                <div className="checkout-form">
+                  {checkoutStep === "complete" ? (
                     <div className="checkout-success">
                       <PackageCheck size={34} />
-                      <p className="eyebrow">Checkout received</p>
-                      <h2>We have your order details.</h2>
-                      <p>Thank you. Danajet will review your order and follow up with the next step.{orderNumber && ` Order ${orderNumber} is saved.`}</p>
+                      <p className="eyebrow">Order Received</p>
+                      <h2>We have received your order details.</h2>
+                      <p>Your order number is <strong>{orderNumber}</strong>. You will receive an email with the next steps.</p>
                       <div className="checkout-next-actions">
                         <a className="button" href="/">Back Home <ArrowRight size={17} /></a>
                         <a className="button button-outline" href="/login">Create or sign in to track orders</a>
                       </div>
                     </div>
+                  ) : checkoutStep === "bank" ? (
+                    <div className="payment-bank-panel">
+                      <p className="eyebrow">Nigerian Customers — Bank Transfer</p>
+                      <h2>Complete your bank transfer.</h2>
+                      <div className="bank-details">
+                        <div><span>Bank Name</span><strong>First Bank of Nigeria</strong></div>
+                        <div><span>Account Name</span><strong>Danajet Nig. Ltd</strong></div>
+                        <div><span>Account Number</span><strong>2048367400</strong></div>
+                        <div><span>Amount to Pay</span><strong>{formatMoney(placedOrder?.display_total || 0, "NGN", "NGN")}</strong></div>
+                        <div><span>Order Number</span><strong>{orderNumber}</strong></div>
+                      </div>
+                      <div className="payment-order-items">
+                        <h3>Your Order</h3>
+                        {placedOrder?.items?.map((item) => (
+                          <div key={item.id}><span>{item.quantity}× {item.title}</span><strong>{formatMoney(item.line_total, "NGN")}</strong></div>
+                        ))}
+                        <div className="payment-order-total"><span>Total Amount</span><strong>{formatMoney(placedOrder?.display_total || 0, "NGN", "NGN")}</strong></div>
+                      </div>
+                      <p className="bank-instructions">Please use your order number as the payment reference. After making payment, send your payment receipt through WhatsApp for confirmation.</p>
+                      <a className="button whatsapp-payment-button" href={whatsappReceiptHref} target={whatsappReceiptHref.startsWith("http") ? "_blank" : undefined} rel="noopener noreferrer"><MessageCircle size={19} /> Send Payment Receipt on WhatsApp</a>
+                    </div>
+                  ) : checkoutStep === "payment" ? (
+                    <div className="payment-options">
+                      <div className="checkout-form-heading">
+                        <p className="eyebrow">Payment Instructions</p>
+                        <h2>Choose Your Payment Method</h2>
+                      </div>
+                      <article className="payment-option-card">
+                        <div>
+                          <span className="payment-option-icon" aria-label="International">🌍</span>
+                          <div>
+                            <h3>International Customers</h3>
+                            <p>Transfer the total amount to our USD receiving account. After making payment, upload your payment confirmation below.</p>
+                            <div className="bank-details">
+                              <div><span>Bank Name</span><strong>USD Receiving Account</strong></div>
+                              <div><span>Account Name</span><strong>Danajet Nig. Ltd.</strong></div>
+                              <div><span>Account Number</span><strong>Available on request</strong></div>
+                            </div>
+                            <label className="upload-receipt-field">
+                              <span>Upload Payment Receipt</span>
+                              <input type="file" accept="image/*,application/pdf" />
+                            </label>
+                          </div>
+                        </div>
+                        <button className="button" type="button" disabled={isSubmitting} onClick={() => submitPaymentChoice("international_request")}>{isSubmitting ? "Creating Order" : <><MessageCircle size={17} /> Send via WhatsApp</>} </button>
+                      </article>
+                      <article className="payment-option-card">
+                        <div>
+                          <span className="payment-option-icon">🇳🇬</span>
+                          <div>
+                            <h3>Nigerian Customers</h3>
+                        <p>Please transfer the total amount to the Nigerian bank account below. Once payment is complete, upload your receipt or send it via WhatsApp.</p>
+                            <div className="bank-details">
+                              <div><span>Bank Name</span><strong>First Bank of Nigeria</strong></div>
+                              <div><span>Account Name</span><strong>Danajet Nig. Ltd.</strong></div>
+                              <div><span>Account Number</span><strong>2048367400</strong></div>
+                            </div>
+                            <label className="upload-receipt-field">
+                              <span>Upload Payment Receipt</span>
+                              <input type="file" accept="image/*,application/pdf" />
+                            </label>
+                          </div>
+                        </div>
+                        <div className="payment-submit-actions">
+                          <button className="button button-outline" type="button" disabled title="Receipt upload is available on this step">Upload Receipt</button>
+                          <a className="button whatsapp-payment-button" href={whatsappReceiptHref} target={whatsappReceiptHref.startsWith("http") ? "_blank" : undefined} rel="noopener noreferrer"><MessageCircle size={18} /> Send via WhatsApp</a>
+                        </div>
+                      </article>
+                      {checkoutError && <p className="form-error">{checkoutError}</p>}
+                      <button className="text-link payment-back-button" type="button" onClick={() => setCheckoutStep("details")}>Back to customer details</button>
+                    </div>
                   ) : (
-                    <>
+                    <form onSubmit={handleDetailsSubmit}>
+                      <>
                       <div className="checkout-form-heading">
                         <p className="eyebrow">Customer details</p>
                         <h2>Complete your order.</h2>
@@ -2048,28 +2732,25 @@ function CheckoutPage() {
                         <label>First name<input name="firstName" autoComplete="given-name" required /></label>
                         <label>Last name<input name="lastName" autoComplete="family-name" required /></label>
                         <label>Email address<input name="email" type="email" autoComplete="email" required /></label>
-                        <label>Phone number<input name="phone" type="tel" autoComplete="tel" /></label>
-                        <label className="checkout-wide">Street address<input name="address" autoComplete="street-address" required /></label>
-                        <label>City<input name="city" autoComplete="address-level2" required /></label>
-                        <label>State / Region<input name="state" autoComplete="address-level1" required /></label>
-                        <label>Postal code<input name="postalCode" autoComplete="postal-code" required /></label>
+                        <label>Phone number<input name="phone" type="tel" autoComplete="tel" required /></label>
                         <label>Country<input name="country" autoComplete="country-name" required /></label>
                         <label className="checkout-wide">Order notes<textarea name="notes" placeholder="Delivery notes, project notes, or anything else we should know." /></label>
                       </div>
                       <div className="checkout-payment-panel">
                         <p className="eyebrow">Payment</p>
-                        <strong>Payment details will be confirmed after your order is reviewed.</strong>
+                        <strong>Choose your preferred payment method on the next step.</strong>
                         {hasCourseItems && <span>Course access will be connected to the email address used for checkout.</span>}
                       </div>
                       {checkoutError && <p className="form-error">{checkoutError}</p>}
                       <button className="button" type="submit" disabled={isSubmitting}>
-                        {isSubmitting ? "Placing Order" : "Place Order"} <ArrowRight size={17} />
+                        Continue to Payment <ArrowRight size={17} />
                       </button>
-                    </>
+                      </>
+                    </form>
                   )}
-                </form>
+                </div>
 
-                {!isSubmitted && (
+                {!placedOrder && (
                   <aside className="checkout-summary">
                     <p className="eyebrow">Your bag</p>
                     <div className="checkout-summary-items">
@@ -2077,13 +2758,13 @@ function CheckoutPage() {
                         <div className="checkout-summary-item" key={item.id}>
                           <span>{item.quantity}x</span>
                           <strong>{item.title}</strong>
-                          <em>{formatPrice(item)}</em>
+                          <em>{formatPrice(item, currency)}</em>
                         </div>
                       ))}
                     </div>
-                    <div><span>Subtotal</span><strong>${subtotal.toFixed(2)}</strong></div>
-                    <div><span>Estimated shipping</span><strong>${estimatedShipping.toFixed(2)}</strong></div>
-                    <div className="cart-total"><span>Total</span><strong>${estimatedTotal.toFixed(2)}</strong></div>
+                    <div><span>Subtotal</span><strong>{formatMoney(subtotal, currency)}</strong></div>
+                    <div><span>Estimated shipping</span><strong>{formatMoney(estimatedShipping, currency)}</strong></div>
+                    <div className="cart-total"><span>Total</span><strong>{formatMoney(estimatedTotal, currency)}</strong></div>
                     <a className="button button-outline continue-shopping-button" href="/cart">Back to Bag</a>
                   </aside>
                 )}
@@ -2104,6 +2785,86 @@ function CheckoutPage() {
   );
 }
 
+function OrdersPage() {
+  const [orders, setOrders] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    let isMounted = true;
+
+    getOrders()
+      .then((items) => {
+        if (isMounted) setOrders(items);
+      })
+      .catch((apiError) => {
+        if (isMounted) setError(apiError.message || "We could not load your orders.");
+      })
+      .finally(() => {
+        if (isMounted) setIsLoading(false);
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  return (
+    <div className="cart-page orders-page">
+      <Header />
+      <main>
+        <section className="cart-hero">
+          <div className="container cart-hero-inner">
+            <h1><PackageCheck size={34} /> Your Orders</h1>
+            <span>{orders.length} {orders.length === 1 ? "order" : "orders"}</span>
+          </div>
+        </section>
+
+        <section className="section cart-section">
+          <div className="container">
+            {isLoading ? (
+              <div className="cart-empty">
+                <LoadingSpinner label="Loading your orders" />
+              </div>
+            ) : error ? (
+              <div className="cart-empty">
+                <PackageCheck size={34} />
+                <h2>We could not load your orders.</h2>
+                <p>{error}</p>
+                <a className="button button-outline" href="/login">Sign In Again</a>
+              </div>
+            ) : orders.length === 0 ? (
+              <div className="cart-empty">
+                <ShoppingBag size={34} />
+                <h2>You have no orders yet</h2>
+                <p>Explore Danajet books and courses when you are ready to get started.</p>
+                <div className="checkout-next-actions">
+                  <a className="button" href="/shop">Books <BookOpen size={17} /></a>
+                  <a className="button button-outline" href="/courses">Courses <MonitorPlay size={17} /></a>
+                </div>
+              </div>
+            ) : (
+              <div className="order-list">
+                {orders.map((order) => (
+                  <article className="cart-item" key={order.id}>
+                    <div className="cart-item-copy">
+                      <span>Order</span>
+                      <h2>{order.order_number}</h2>
+                      <p>{order.items?.length || 0} {order.items?.length === 1 ? "item" : "items"} · {order.status}</p>
+                    </div>
+                    <strong>${Number(order.total || 0).toFixed(2)}</strong>
+                  </article>
+                ))}
+              </div>
+            )}
+          </div>
+        </section>
+      </main>
+      <Footer />
+    </div>
+  );
+}
+
 function getPortfolioImageSrc(project) {
   const image = project.featuredImageUrl || project.imageUrl || project.image || "03";
   if (/^https?:\/\//i.test(image) || String(image).startsWith("/") || String(image).startsWith("media/") || String(image).startsWith("uploads/")) {
@@ -2112,11 +2873,60 @@ function getPortfolioImageSrc(project) {
   return `/assets/portfolio/page-${String(image).replace(/^page-/i, "").replace(/\.jpg$/i, "")}.jpg`;
 }
 
+function getPortfolioMedia(project) {
+  const src = resolveMediaUrl(project.videoUrl || project.video_url || project.mediaUrl || project.media_url || getPortfolioImageSrc(project));
+  const type = project.mediaType || project.media_type || project.metadata?.media_type;
+  const isVideo = type === "video" || /\.(mp4|webm|ogg|mov)(?:$|[?#])/i.test(src);
+  return { src, isVideo };
+}
+
+function getPortfolioAction(project) {
+  const href = [
+    project.externalUrl,
+    project.external_url,
+    project.amazonUrl,
+    project.amazon_url,
+    project.projectUrl,
+    project.project_url,
+    project.projectLink,
+    project.project_link,
+    project.embedUrl,
+    project.actionUrl,
+    project.action_url,
+    project.link,
+    project.url,
+    project.metadata?.external_url,
+    project.metadata?.amazon_url,
+    project.metadata?.project_url,
+    project.metadata?.action_url,
+  ].find((value) => typeof value === "string" && value.trim());
+  if (!href) return null;
+  const cleanHref = href.trim();
+  const customLabel = [
+    project.actionLabel,
+    project.action_label,
+    project.ctaLabel,
+    project.cta_label,
+    project.metadata?.action_label,
+    project.metadata?.cta_label,
+  ].find((value) => typeof value === "string" && value.trim());
+  return {
+    href: cleanHref,
+    label: customLabel?.trim() || (/amazon\./i.test(cleanHref) ? "View on Amazon" : "View Project"),
+  };
+}
+
 function PortfolioCard({ project, index, onOpen }) {
   const category = project.categoryLabel || portfolioCategories.find((item) => item.id === project.category)?.label;
+  const media = getPortfolioMedia(project);
   const preview = (
     <>
-      <img src={getPortfolioImageSrc(project)} alt={`${project.title} portfolio presentation`} loading="lazy" />
+      {media.isVideo ? (
+        <video src={media.src} muted playsInline preload="metadata" aria-label={`${project.title} video preview`} />
+      ) : (
+        <img src={media.src} alt={`${project.title} portfolio presentation`} loading="lazy" />
+      )}
+      {media.isVideo && <span className="portfolio-video-badge" aria-hidden="true"><Play size={22} fill="currentColor" /></span>}
       <span><MoveUpRight size={19} /></span>
     </>
   );
@@ -2162,11 +2972,11 @@ function Footer() {
   const [isNewsletterSubmitting, setIsNewsletterSubmitting] = useState(false);
   const email = footer.email || adminContactDefaults.email;
   const whatsapp = footer.whatsapp || adminContactDefaults.whatsapp;
-  const whatsappHref = whatsapp.startsWith("http") ? whatsapp : `/contact#whatsapp`;
+  const whatsappHref = whatsapp.startsWith("http") ? whatsapp : "https://wa.me/2348103691930";
   const socialLinks = {
-    youtube: footer.youtube || adminContactDefaults.youtube,
+    youtube: "/media",
     instagram: footer.instagram || adminContactDefaults.instagram,
-    facebook: footer.facebook || "#facebook",
+    facebook: footer.facebook || adminContactDefaults.facebook,
     linkedin: footer.linkedin || adminContactDefaults.linkedin,
     tiktok: footer.tiktok || adminContactDefaults.tiktok,
   };
@@ -2193,8 +3003,8 @@ function Footer() {
         <div className="footer-brand">
           <BrandMark light />
           <p>{footer.footerCopy || adminContactDefaults.footerCopy}</p>
-          <a className="footer-brand-link" href="/blog">Blog Posts <ArrowRight size={15} /></a>
-          <form className="footer-newsletter" onSubmit={handleNewsletterSubmit}>
+          <a className="footer-brand-link" href="/blog">Blog <ArrowRight size={15} /></a>
+          <form className="footer-newsletter" id="join-network" onSubmit={handleNewsletterSubmit}>
             <div>
               <strong>Join the Danajet Network</strong>
               <span>Books. Learning. Creativity. Delivered to your inbox.</span>
@@ -2215,14 +3025,15 @@ function Footer() {
             {newsletterStatus && <p>{newsletterStatus}</p>}
           </form>
           <div className="socials">
+            <a href={whatsappHref} aria-label="WhatsApp"><MessageCircle size={18} /></a>
             <a href={socialLinks.youtube} aria-label="YouTube"><Youtube /></a>
-            <a href={socialLinks.instagram} aria-label="Instagram"><Instagram /></a>
-            <a href={socialLinks.facebook} aria-label="Facebook"><Facebook /></a>
             <a href={socialLinks.linkedin} aria-label="LinkedIn"><Linkedin /></a>
+            <a href={socialLinks.facebook} aria-label="Facebook"><Facebook /></a>
+            <a href={socialLinks.instagram} aria-label="Instagram"><Instagram /></a>
             <a href={socialLinks.tiktok} aria-label="TikTok"><Tiktok /></a>
           </div>
         </div>
-        <div><h3>Explore</h3><a href="/about">About</a><a href="/shop">Shop</a><a href="/courses">Academy</a><a href="/blog">Blog Posts</a><a href="/#brands">Media</a><a href="/reviews">Testimonials</a></div>
+        <div><h3>Explore</h3><a href="/about">About</a><a href="/shop">Shop</a><a href="/courses">Academy</a><a href="/media">Media</a><a href="/reviews">Testimonials</a><a href="/blog">Blog</a></div>
         <div><h3>BookLab</h3><a href="/#booklab-services">Book formatting</a><a href="/#booklab-services">Book design</a><a href="/#booklab-services">KDP support</a><a href="/#booklab-services">EPUB formatting</a><a href="/portfolio">Portfolio</a></div>
         <div><h3>More Services</h3><a href="/#booklab-services">Children's books</a><a href="/#booklab-services">Workbook design</a><a href="/#booklab-services">A+ content design</a><a href="/#booklab-services">Book trailers</a></div>
         <div><h3>Contact</h3><a href="/contact">Contact page</a><a href={`mailto:${email}`}>{email}</a><a href={whatsappHref}><MessageCircle size={15} /> WhatsApp</a><a href={socialLinks.youtube}>YouTube</a><a href={socialLinks.instagram}>Instagram</a><a href={socialLinks.tiktok}>TikTok</a></div>
@@ -2344,6 +3155,53 @@ function SiteExperience({ children }) {
   );
 }
 
+function renderEcosystemText(text) {
+  const parts = text.split(/(\bDanajet\b)/g);
+  return (
+    <>
+      {parts.map((part, index) => {
+        if (part === "Danajet") {
+          return (
+            <span key={index}>
+              <span style={{ color: "var(--orange)", fontWeight: "700" }}>Danajet</span>
+            </span>
+          );
+        }
+        return part;
+      })}
+    </>
+  );
+}
+
+function renderInvitationText(text) {
+  const parts = text.split(/(\bDanajet\s+journey\b)/gi);
+  return (
+    <>
+      {parts.map((part, index) => {
+        if (part.toLowerCase() === "danajet journey") {
+          return (
+            <span key={index} className="danajet-journey">
+              {part}
+            </span>
+          );
+        }
+        return part;
+      })}
+    </>
+  );
+}
+
+function renderJourneyText(text) {
+  const parts = text.split(/(\bDanajet\b|\bDan\b|\bAjet\b)/g);
+  return (
+    <>
+      {parts.map((part, index) =>
+        /^(Danajet|Dan|Ajet)$/.test(part) ? <strong key={index}>{part}</strong> : part
+      )}
+    </>
+  );
+}
+
 function AboutStory({ content = adminAboutDefaults }) {
   const aboutVideoUrl = resolveMediaUrl(content.video);
   const focusAreas = [
@@ -2397,13 +3255,13 @@ function AboutStory({ content = adminAboutDefaults }) {
 
         <div className="about-body-grid">
           <div className="about-main-copy">
-            <p>{content.journey}</p>
-            <p>{content.ecosystem}</p>
+            <p>{renderJourneyText(content.journey)}</p>
+            <p><strong>{renderEcosystemText(content.ecosystem.split(". ")[0])}</strong>. {content.ecosystem.split(". ").slice(1).join(". ")}</p>
             <blockquote>
               <span>{content.beliefTitle}</span>
               <strong>{content.beliefText}</strong>
             </blockquote>
-            <p>{content.invitation}</p>
+            <p>{renderInvitationText(content.invitation)}</p>
           </div>
 
           <div className="about-side-note">
@@ -2461,7 +3319,7 @@ function AboutPage() {
           <div className="container">
             <a className="portfolio-back" href="/"><ArrowRight size={16} /> Back to home</a>
             <p className="eyebrow">About Danajet</p>
-            <h1>About Daniel & <em>Danajet.</em></h1>
+            <h1>About Daniel & <em>Danajet<span className="about-title-stop">.</span></em></h1>
             <p>Turning ideas into books, stories into impact, and dreams into reality.</p>
             <div className="about-hero-details" aria-label="Danajet strengths">
               <span>Book Design</span>
@@ -2492,11 +3350,26 @@ function AboutPage() {
 
 function RequestProjectPage() {
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [otherService, setOtherService] = useState("");
+  const [selectedBookSize, setSelectedBookSize] = useState("");
+  const [contactMethod, setContactMethod] = useState([]);
+  const whatsappSelected = contactMethod.includes("WhatsApp");
 
   const handleSubmit = (event) => {
     event.preventDefault();
+    if (whatsappSelected && !event.currentTarget.phone.value.trim()) {
+      event.currentTarget.phone.focus();
+      return;
+    }
     setIsSubmitted(true);
     window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  const handleContactMethodChange = (event) => {
+    const { value, checked } = event.target;
+    setContactMethod((current) =>
+      checked ? [...current, value] : current.filter((method) => method !== value)
+    );
   };
 
   return (
@@ -2507,7 +3380,7 @@ function RequestProjectPage() {
           <div className="container request-layout">
             <aside className="request-sidebar">
               <p className="eyebrow">Before we begin</p>
-              <h2>Your project details help me prepare the right creative path.</h2>
+              <h2>Your project details help me prepare the right <span className="orange-text">Creative Path</span>.</h2>
               <p>Share as much as you can. If something is not ready yet, choose the closest option and we can refine it together.</p>
               <div className="request-note">
                 <strong>Confidentiality</strong>
@@ -2540,22 +3413,32 @@ function RequestProjectPage() {
                 </div>
 
                 <label className="form-field">
-                  <span>Phone Number <em>(Optional)</em></span>
-                  <small>Include your country code.</small>
-                  <input name="phone" type="tel" placeholder="+1" />
+                  <span>Phone Number {whatsappSelected ? <b>*</b> : <em>(Optional)</em>}</span>
+                  <small>{whatsappSelected ? "Required because WhatsApp is selected. Include your country code." : "Include your country code."}</small>
+                  <input name="phone" type="tel" placeholder="+1" required={whatsappSelected} />
                 </label>
 
                 <fieldset className="form-fieldset">
                   <legend>What Service Do You Need? <b>*</b></legend>
                   <small>Select all that apply.</small>
                   <div className="option-grid">
-                    {requestServiceOptions.map((option) => (
+                    {requestServiceOptions.filter((option) => option !== "Other (Please specify)").map((option) => (
                       <label className="option-box" key={option}>
                         <span>{option}</span>
                         <input name="services" type="checkbox" value={option} />
                       </label>
                     ))}
                   </div>
+                  <label className="form-field other-service-field">
+                    <span>Other (Please specify)</span>
+                    <input
+                      name="otherService"
+                      type="text"
+                      value={otherService}
+                      onChange={(event) => setOtherService(event.target.value)}
+                      placeholder="Write the service you need"
+                    />
+                  </label>
                 </fieldset>
 
                 <label className="form-field">
@@ -2583,10 +3466,23 @@ function RequestProjectPage() {
                 <div className="form-grid two-columns">
                   <label className="form-field">
                     <span>Preferred Book Size</span>
-                    <select name="bookSize" defaultValue="">
-                      <option value="" disabled>Select an option</option>
-                      {bookSizeOptions.map((option) => <option value={option} key={option}>{option}</option>)}
-                    </select>
+                    {selectedBookSize === "Other (Please specify)" ? (
+                      <div className="custom-size-field">
+                        <input
+                          name="bookSize"
+                          type="text"
+                          placeholder="Enter your book size (e.g., 7 x 10 inches)"
+                          required
+                          autoFocus
+                        />
+                        <button type="button" onClick={() => setSelectedBookSize("")}>Choose a preset size</button>
+                      </div>
+                    ) : (
+                      <select name="bookSize" value={selectedBookSize} onChange={(event) => setSelectedBookSize(event.target.value)}>
+                        <option value="" disabled>Select an option</option>
+                        {bookSizeOptions.map((option) => <option value={option} key={option}>{option}</option>)}
+                      </select>
+                    )}
                   </label>
                   <label className="form-field">
                     <span>Estimated Budget</span>
@@ -2621,7 +3517,13 @@ function RequestProjectPage() {
                     {contactMethodOptions.map((option) => (
                       <label className="option-box" key={option}>
                         <span>{option}</span>
-                        <input name="contactMethod" type="checkbox" value={option} />
+                        <input
+                          name="contactMethod"
+                          type="checkbox"
+                          value={option}
+                          checked={contactMethod.includes(option)}
+                          onChange={handleContactMethodChange}
+                        />
                       </label>
                     ))}
                   </div>
@@ -2685,7 +3587,7 @@ function ContactPage() {
   ];
   const contactDetails = [
     { label: "Email", value: "hello@danajet.com", href: "mailto:hello@danajet.com" },
-    { label: "WhatsApp", value: "Chat with Danajet", href: "#whatsapp", id: "whatsapp" },
+    { label: "WhatsApp", value: "Chat with Danajet", href: "https://wa.me/2348103691930", id: "whatsapp" },
     { label: "Availability", value: "Monday - Sunday" },
     { label: "Response Time", value: "Usually within 1 - 3 hours" },
   ];
@@ -2703,7 +3605,7 @@ function ContactPage() {
           <div className="container contact-hero-inner">
             <a className="portfolio-back" href="/"><ArrowRight size={16} /> Back to home</a>
             <p className="eyebrow">Contact Danajet</p>
-            <h1>Let's talk.</h1>
+            <h1>Let's talk<span className="contact-orange-period">.</span></h1>
             <p>Have a book project, publishing question, course request, or collaboration idea? Send a message and I will get back to you.</p>
             <div className="contact-hero-actions">
               <a className="button" href="#contact-form">Send a Message <Send size={17} /></a>
@@ -2731,7 +3633,7 @@ function ContactPage() {
           <div className="container contact-main-layout">
             <aside className="contact-detail-panel">
               <p className="eyebrow">Direct channels</p>
-              <h2>Choose the easiest way to reach me.</h2>
+              <h2>Choose the easiest way to <span className="contact-orange-words">reach me</span><span className="contact-black-period">.</span></h2>
               <div className="contact-detail-list">
                 {contactDetails.map((detail) => (
                   <div className="contact-detail-item" id={detail.id} key={detail.label}>
@@ -3006,11 +3908,10 @@ function HomePage() {
             <div className="brand-grid">
               {homeBrands.map(({ icon: Icon, ...brand }) => (
                 <a href={brand.href} className="brand-card" key={brand.name}>
-                  <span className="brand-code">{brand.code}</span>
-                  <Icon size={30} />
+                  <Icon size={34} className="brand-symbol" aria-hidden="true" />
                   <h3>Danajet-{brand.name}</h3>
                   <p>{brand.copy}</p>
-                  <MoveUpRight size={18} className="brand-arrow" />
+                  <span className="brand-learn-more">Learn More <ArrowRight size={16} /></span>
                 </a>
               ))}
             </div>
@@ -3023,7 +3924,7 @@ function HomePage() {
             <SectionHeading
               eyebrow="Featured books"
               eyebrowClassName="eyebrow-pill"
-              title={<>Fresh stories<span className="theme-stop">.</span> <span className="orange-text">Beautifully made<span className="theme-stop">.</span></span></>}
+              title={<>Fresh stories<span className="theme-stop">.</span> <span className="orange-text">Beautifully made<span className="theme-stop beautifully-made-stop">.</span></span></>}
               copy="Explore books designed to inform, inspire, and stay with you long after the final page."
               action={<a className="text-link" href="/shop">Visit the shop <ArrowRight size={17} /></a>}
             />
@@ -3062,7 +3963,7 @@ function HomePage() {
             <SectionHeading
               eyebrow="Featured work"
               eyebrowClassName="eyebrow-pill"
-              title={<>A glimpse of work, <span className="orange-text">made to stand out<span className="theme-stop">.</span></span></>}
+              title={<>A glimpse of work, <span className="orange-text">made to stand out<span className="portfolio-contrast-stop">.</span></span></>}
               copy="A small selection from the full Danajet portfolio across publishing, content, and document design."
               action={<a className="button button-outline" href="/portfolio">View Full Portfolio <ArrowRight size={17} /></a>}
             />
@@ -3078,7 +3979,7 @@ function HomePage() {
           <FlightPath variant="corner" tone="light" />
           <div className="container">
             <div className="testimonial-heading">
-              <h2>Kind words from people whose ideas <span>took flight.</span></h2>
+              <h2>Kind words from people whose ideas <span>took flight<span className="took-flight-stop">.</span></span></h2>
             </div>
             <div className="testimonial-grid" aria-label="Featured client testimonials">
               {homeTestimonials.slice(0, 3).map((testimonial) => (
@@ -3100,7 +4001,7 @@ function HomePage() {
           <FlightPath variant="hero" tone="dark" />
           <div className="container final-cta-inner">
             <p className="eyebrow eyebrow-pill">Your next chapter starts here</p>
-            <h2>Ready to bring your <span className="orange-text">book ideas</span> to life?</h2>
+            <h2>Ready to bring your <span className="orange-text">book ideas</span> to life<span className="question-mark">?</span></h2>
             <p>Tell me what you're creating, where you are in the process, and where you want your book to go.</p>
             <div className="hero-actions">
               <a className="button" href="/request-project">Start a Project <Send size={17} /></a>
@@ -3122,6 +4023,21 @@ function PortfolioPage() {
   const visibleProjects = activePortfolio === "all"
     ? portfolioItems
     : portfolioItems.filter((project) => project.category === activePortfolio);
+  const selectedMedia = selectedProject ? getPortfolioMedia(selectedProject) : null;
+  const selectedAction = selectedProject ? getPortfolioAction(selectedProject) : null;
+
+  const navigatePortfolio = (direction) => {
+    if (!visibleProjects.length) return;
+    setSelectedProject((currentProject) => {
+      const currentIndex = visibleProjects.findIndex((project) =>
+        project === currentProject ||
+        (project.id != null && project.id === currentProject?.id) ||
+        (project.title === currentProject?.title && project.image === currentProject?.image)
+      );
+      const safeIndex = currentIndex >= 0 ? currentIndex : 0;
+      return visibleProjects[(safeIndex + direction + visibleProjects.length) % visibleProjects.length];
+    });
+  };
 
   useEffect(() => {
     let isMounted = true;
@@ -3137,14 +4053,15 @@ function PortfolioPage() {
   }, []);
 
   useEffect(() => {
-    if (!selectedProject) return;
-    const refreshedProject = portfolioItems.find((project) => project.id === selectedProject.id);
-    if (refreshedProject) {
-      setSelectedProject(refreshedProject);
-    } else if (!portfolioItems.some((project) => project.title === selectedProject.title && project.image === selectedProject.image)) {
-      setSelectedProject(null);
-    }
-  }, [portfolioItems, selectedProject]);
+    if (!selectedProject) return undefined;
+    const handleKeyDown = (event) => {
+      if (event.key === "Escape") setSelectedProject(null);
+      if (event.key === "ArrowLeft") navigatePortfolio(-1);
+      if (event.key === "ArrowRight") navigatePortfolio(1);
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [selectedProject, visibleProjects]);
 
   return (
     <div className="portfolio-page">
@@ -3185,11 +4102,11 @@ function PortfolioPage() {
           </div>
         </section>
 
-        <section className="final-cta">
+        <section className="final-cta portfolio-final-cta">
           <FlightPath variant="hero" tone="dark" />
           <div className="container final-cta-inner">
             <p className="eyebrow">Have a project in mind?</p>
-            <h2>Let’s make your book the next standout.</h2>
+            <h2>Let’s make your book the next <span className="portfolio-standout">standout</span>.</h2>
             <a className="button" href="/request-project">Start a Project <Send size={17} /></a>
           </div>
         </section>
@@ -3200,10 +4117,29 @@ function PortfolioPage() {
           <button className="lightbox-backdrop" type="button" onClick={() => setSelectedProject(null)} aria-label="Close portfolio image" />
           <div className="lightbox-content">
             <button className="lightbox-close" type="button" onClick={() => setSelectedProject(null)} aria-label="Close"><X size={24} /></button>
-            <img src={getPortfolioImageSrc(selectedProject)} alt={`${selectedProject.title} portfolio presentation`} />
-            <div>
-              <p>{portfolioCategories.find((category) => category.id === selectedProject.category)?.label}</p>
-              <h3>{selectedProject.title}</h3>
+            {visibleProjects.length > 1 && (
+              <>
+                <button className="lightbox-nav lightbox-prev" type="button" onClick={() => navigatePortfolio(-1)} aria-label="Previous portfolio item"><ChevronDown size={28} /></button>
+                <button className="lightbox-nav lightbox-next" type="button" onClick={() => navigatePortfolio(1)} aria-label="Next portfolio item"><ChevronDown size={28} /></button>
+              </>
+            )}
+            <div className="lightbox-media">
+              {selectedMedia.isVideo ? (
+                <video key={selectedMedia.src} src={selectedMedia.src} controls autoPlay playsInline />
+              ) : (
+                <img src={selectedMedia.src} alt={`${selectedProject.title} portfolio presentation`} />
+              )}
+            </div>
+            <div className="lightbox-details">
+              <div>
+                <p>{portfolioCategories.find((category) => category.id === selectedProject.category)?.label}</p>
+                <h3>{selectedProject.title}</h3>
+              </div>
+              {selectedAction && (
+                <a className="button lightbox-action" href={selectedAction.href} target="_blank" rel="noopener noreferrer">
+                  {selectedAction.label} <ExternalLink size={16} />
+                </a>
+              )}
             </div>
           </div>
         </div>
@@ -3257,7 +4193,7 @@ function ReviewsPage() {
           <div className="container reviews-hero-inner">
             <div>
               <a className="reviews-back" href="/"><ArrowRight size={16} /> Back to home</a>
-              <h1>Kind words from ideas that <em>took flight.</em></h1>
+              <h1>Kind words from ideas that <em>took flight<span className="took-flight-stop">.</span></em></h1>
             </div>
             <div className="reviews-intro">
               <p>Authors, educators, and creators share what it felt like to turn an early idea into a polished, reader-ready book.</p>
@@ -3396,13 +4332,14 @@ const adminCtaDefaults = [
 
 const adminContactDefaults = {
   email: "hello@danajet.com",
-  whatsapp: "+1 000 000 0000",
+  whatsapp: "https://wa.me/2348103691930",
   businessHours: "Monday - Friday, 9:00 AM - 5:00 PM",
   location: "Remote, serving authors worldwide",
-  youtube: "#youtube",
-  instagram: "#instagram",
-  tiktok: "#tiktok",
-  linkedin: "#linkedin",
+  youtube: "/media",
+  facebook: "https://www.facebook.com/share/g/19Bijsrav6/",
+  instagram: "https://www.instagram.com/thedanajet",
+  tiktok: "https://www.tiktok.com/@danajetbooklab",
+  linkedin: "https://www.linkedin.com/in/ajetunmobi-daniel",
   footerCopy: "Helping authors create, publish, and share professional books while building educational resources, creative media, and future innovations.",
 };
 
@@ -4107,10 +5044,12 @@ function AdminDashboardPage({ onLogout }) {
     confidentiality: "Your manuscript and project details will be treated with complete confidentiality and will never be shared with third parties.",
   });
   const [adminMediaLibrary, setAdminMediaLibrary] = useState(adminMediaDefaults);
+  const [adminMediaChannels, setAdminMediaChannels] = useState(mediaChannelDefaults);
+  const [adminMediaProductions, setAdminMediaProductions] = useState(mediaProductionDefaults);
   const [adminSettings, setAdminSettings] = useState({
     announcement: "Worked with authors worldwide",
     primaryCta: "Start a Project",
-    amazonUrl: "https://amazon.com/",
+    amazonUrl: "https://www.amazon.com/author/danielthebooksmith",
     email: "hello@danajet.com",
     ...adminSiteDefaults,
   });
@@ -4150,6 +5089,8 @@ function AdminDashboardPage({ onLogout }) {
     embedUrl: "",
     introVideoUrl: "",
     thumbnailUrl: "",
+    accessUrl: "",
+    fileType: "PDF",
     thumbnailFile: null,
     introVideoFile: null,
     duration: "",
@@ -4167,6 +5108,8 @@ function AdminDashboardPage({ onLogout }) {
     client: "",
     status: "Draft",
     embedUrl: "",
+    actionLabel: "",
+    mediaType: "image",
     description: "",
   });
   const [reviewDraft, setReviewDraft] = useState({
@@ -4272,6 +5215,22 @@ function AdminDashboardPage({ onLogout }) {
       showAdminNotice("Media library saved to Django.");
     } catch (error) {
       showAdminNotice(`${error.message || "Media library could not be saved."} Make sure you are logged in as staff.`, "error");
+    }
+  };
+  const saveMediaChannels = async () => {
+    try {
+      await saveAdminSetting("collection-media-channels", adminMediaChannels, "Media page YouTube channels");
+      showAdminNotice("YouTube channel cards saved.");
+    } catch (error) {
+      showAdminNotice(error.message || "YouTube channels could not be saved.", "error");
+    }
+  };
+  const saveMediaProductions = async () => {
+    try {
+      await saveAdminSetting("collection-media-productions", adminMediaProductions, "Media page featured productions");
+      showAdminNotice("Featured YouTube productions saved.");
+    } catch (error) {
+      showAdminNotice(error.message || "Featured productions could not be saved.", "error");
     }
   };
   const deleteMediaItem = async (id) => {
@@ -4444,6 +5403,8 @@ function AdminDashboardPage({ onLogout }) {
           setAdminContact((current) => ({ ...current, ...getSettingsGroup(settings, "contact-footer") }));
           setAdminSettings((current) => ({ ...current, ...getSettingsGroup(settings, "site") }));
           setAdminServiceCards((current) => getJsonSetting(settings, "collection-services", current));
+          setAdminMediaChannels((current) => getJsonSetting(settings, "collection-media-channels", current));
+          setAdminMediaProductions((current) => getJsonSetting(settings, "collection-media-productions", current));
           setAdminCourseCategoryItems((current) => getJsonSetting(settings, "collection-course-categories", current));
           setAdminCtas((current) => getJsonSetting(settings, "collection-ctas", current));
           setAdminHighlights((current) => getJsonSetting(settings, "collection-featured-highlights", current));
@@ -4502,6 +5463,8 @@ function AdminDashboardPage({ onLogout }) {
       embedUrl: "",
       introVideoUrl: "",
       thumbnailUrl: "",
+      accessUrl: "",
+      fileType: "PDF",
       thumbnailFile: null,
       introVideoFile: null,
       duration: "",
@@ -4522,6 +5485,8 @@ function AdminDashboardPage({ onLogout }) {
       client: "",
       status: "Draft",
       embedUrl: "",
+      actionLabel: "",
+      mediaType: "image",
       description: "",
     });
   };
@@ -4595,6 +5560,8 @@ function AdminDashboardPage({ onLogout }) {
       embedUrl: course.embedUrl || "",
       introVideoUrl: course.introVideoUrl || course.videoSrc || "",
       thumbnailUrl: course.thumbnailUrl || "",
+      accessUrl: course.accessUrl || course.access_url || "",
+      fileType: course.fileType || course.metadata?.file_type || "PDF",
       thumbnailFile: null,
       introVideoFile: null,
       duration: course.duration || "",
@@ -4623,6 +5590,8 @@ function AdminDashboardPage({ onLogout }) {
       client: project.client || "",
       status: project.status || "Draft",
       embedUrl: project.embedUrl || "",
+      actionLabel: project.actionLabel || "",
+      mediaType: project.mediaType || "image",
       description: project.description || "",
     });
     setEditingPortfolioId(project.id);
@@ -4773,7 +5742,7 @@ function AdminDashboardPage({ onLogout }) {
   };
 
   const handleToggleCourseStatus = async (id) => {
-    const statuses = ["Draft", "Coming soon", "Published"];
+    const statuses = ["Draft", "Coming soon", "Available Now", "Published"];
     const course = adminCourses.find((item) => item.id === id);
     if (!course) return;
     const nextStatus = statuses[(statuses.indexOf(course.status) + 1) % statuses.length];
@@ -5090,6 +6059,7 @@ function AdminDashboardPage({ onLogout }) {
           { key: "businessHours", label: "Business Hours" },
           { key: "location", label: "Location" },
           { key: "youtube", label: "YouTube Link" },
+          { key: "facebook", label: "Facebook Community Link" },
           { key: "instagram", label: "Instagram Link" },
           { key: "tiktok", label: "TikTok Link" },
           { key: "linkedin", label: "LinkedIn Link" },
@@ -5098,24 +6068,64 @@ function AdminDashboardPage({ onLogout }) {
       />
     );
     if (activeAdminSection === "media-library") return (
-      <AdminCollectionPanel
-        eyebrow="Assets"
-        title="Uploads and media library"
-        copy="Central image/file inventory for books, reviews, portfolio, courses, hero images, and brand assets."
-        items={adminMediaLibrary}
-        query={normalizedAdminSearch}
-        addLabel="Add Media"
-        onAdd={() => addAdminCollectionItem(setAdminMediaLibrary, "media", { title: "New Upload", type: "Image", path: "/assets/new-image.jpg", usage: "Unassigned" }, "Media item")}
-        onUpdate={(id, key, value) => updateAdminCollectionItem(setAdminMediaLibrary, id, key, value)}
-        onDelete={deleteMediaItem}
-        onSave={saveMediaLibrary}
-        fields={[
-          { key: "title", label: "Asset Title" },
-          { key: "type", label: "Type", type: "select", options: ["Image", "Video", "PDF", "Folder", "Document"] },
-          { key: "path", label: "Path / URL", wide: true },
-          { key: "usage", label: "Used For", wide: true },
-        ]}
-      />
+      <>
+        <AdminCollectionPanel
+          eyebrow="Media Page"
+          title="YouTube channel cards"
+          copy="Edit channel names, descriptions, banners, profile images, links, and launch status."
+          items={adminMediaChannels}
+          query={normalizedAdminSearch}
+          addLabel="Add Channel"
+          onAdd={() => addAdminCollectionItem(setAdminMediaChannels, "channel", { name: "New Channel", description: "", url: "", logo: "", banner: "", status: "active" }, "Channel")}
+          onUpdate={(id, key, value) => updateAdminCollectionItem(setAdminMediaChannels, id, key, value)}
+          onDelete={(id) => setAdminMediaChannels((current) => current.filter((item) => item.id !== id))}
+          onSave={saveMediaChannels}
+          fields={[
+            { key: "name", label: "Channel Name" },
+            { key: "description", label: "Short Description", type: "textarea", wide: true },
+            { key: "url", label: "YouTube Channel URL", wide: true },
+            { key: "banner", label: "Banner Image URL", wide: true },
+            { key: "logo", label: "Logo / Profile Image URL", wide: true },
+            { key: "status", label: "Status", type: "select", options: ["active", "coming-soon"] },
+          ]}
+        />
+        <AdminCollectionPanel
+          eyebrow="Media Page"
+          title="Featured YouTube productions"
+          copy="Paste YouTube links, edit titles and categories, remove items, or change display order. Thumbnails are generated automatically."
+          items={adminMediaProductions}
+          query={normalizedAdminSearch}
+          addLabel="Add YouTube Video"
+          onAdd={() => addAdminCollectionItem(setAdminMediaProductions, "production", { title: "New Production", category: "Book Trailers", youtubeUrl: "", displayOrder: adminMediaProductions.length + 1 }, "Production")}
+          onUpdate={(id, key, value) => updateAdminCollectionItem(setAdminMediaProductions, id, key, value)}
+          onDelete={(id) => setAdminMediaProductions((current) => current.filter((item) => item.id !== id))}
+          onSave={saveMediaProductions}
+          fields={[
+            { key: "title", label: "Video Title" },
+            { key: "category", label: "Category", type: "select", options: ["Book Trailers", "Educational Stories", "Client Showcase", "Promotions"] },
+            { key: "youtubeUrl", label: "YouTube Video URL", wide: true },
+            { key: "displayOrder", label: "Display Order" },
+          ]}
+        />
+        <AdminCollectionPanel
+          eyebrow="Assets"
+          title="Uploads and media library"
+          copy="Central image/file inventory for books, reviews, portfolio, courses, hero images, and brand assets."
+          items={adminMediaLibrary}
+          query={normalizedAdminSearch}
+          addLabel="Add Media"
+          onAdd={() => addAdminCollectionItem(setAdminMediaLibrary, "media", { title: "New Upload", type: "Image", path: "/assets/new-image.jpg", usage: "Unassigned" }, "Media item")}
+          onUpdate={(id, key, value) => updateAdminCollectionItem(setAdminMediaLibrary, id, key, value)}
+          onDelete={deleteMediaItem}
+          onSave={saveMediaLibrary}
+          fields={[
+            { key: "title", label: "Asset Title" },
+            { key: "type", label: "Type", type: "select", options: ["Image", "Video", "PDF", "Folder", "Document"] },
+            { key: "path", label: "Path / URL", wide: true },
+            { key: "usage", label: "Used For", wide: true },
+          ]}
+        />
+      </>
     );
     if (activeAdminSection === "settings") return <AdminSettingsPanel settings={adminSettings} onUpdateSetting={handleUpdateSetting} onSaveSettings={() => saveSettingsDraft("site", adminSettings, "Site settings")} />;
 
@@ -5295,12 +6305,18 @@ function AdminDashboardPage({ onLogout }) {
             <label>Subtitle<input value={courseDraft.subtitle} onChange={(event) => setCourseDraft((draft) => ({ ...draft, subtitle: event.target.value }))} placeholder="A focused lesson for authors" /></label>
             <label>Category<select value={courseDraft.category} onChange={(event) => setCourseDraft((draft) => ({ ...draft, category: event.target.value }))}>{courseCategories.map((category) => <option value={category.title} key={category.title}>{category.title}</option>)}</select></label>
             <label>Price<input value={courseDraft.price} onChange={(event) => setCourseDraft((draft) => ({ ...draft, price: event.target.value }))} placeholder="$0" /></label>
-            <label>Status<select value={courseDraft.status} onChange={(event) => setCourseDraft((draft) => ({ ...draft, status: event.target.value }))}><option>Draft</option><option>Coming soon</option><option>Published</option></select></label>
+            <label>Status<select value={courseDraft.status} onChange={(event) => setCourseDraft((draft) => ({ ...draft, status: event.target.value }))}><option>Draft</option><option>Coming soon</option><option>Available Now</option><option>Published</option></select></label>
             <label>Duration<input value={courseDraft.duration} onChange={(event) => setCourseDraft((draft) => ({ ...draft, duration: event.target.value }))} placeholder="2h 30m" /></label>
             <label>Level<input value={courseDraft.level} onChange={(event) => setCourseDraft((draft) => ({ ...draft, level: event.target.value }))} placeholder="Beginner" /></label>
             <label className="admin-modal-wide">Embedded Link<input value={courseDraft.embedUrl} onChange={(event) => setCourseDraft((draft) => ({ ...draft, embedUrl: event.target.value }))} placeholder="YouTube, Vimeo, Canva, Gumroad, private lesson player, etc." /></label>
             <label className="admin-modal-wide">Intro Video URL or Asset Path<input value={courseDraft.introVideoUrl} onChange={(event) => setCourseDraft((draft) => ({ ...draft, introVideoUrl: event.target.value }))} placeholder="https://... or /media/uploads/intro.mp4" /></label>
             <label className="admin-modal-wide">Thumbnail URL or Asset Path<input value={courseDraft.thumbnailUrl} onChange={(event) => setCourseDraft((draft) => ({ ...draft, thumbnailUrl: event.target.value }))} placeholder="https://... or /media/uploads/thumb.jpg" /></label>
+            {courseDraft.category === "Templates & Resources" && (
+              <>
+                <label className="admin-modal-wide">Free Resource Download URL<input value={courseDraft.accessUrl} onChange={(event) => setCourseDraft((draft) => ({ ...draft, accessUrl: event.target.value }))} placeholder="https://... direct file link" /></label>
+                <label>File Type<input value={courseDraft.fileType} onChange={(event) => setCourseDraft((draft) => ({ ...draft, fileType: event.target.value }))} placeholder="PDF" /></label>
+              </>
+            )}
             <div className="admin-course-upload-grid">
               <label className="admin-upload-box admin-click-upload">
                 <Upload size={20} />
@@ -5409,24 +6425,32 @@ function AdminDashboardPage({ onLogout }) {
             <label>Project Title<input value={portfolioDraft.title} onChange={(event) => setPortfolioDraft((draft) => ({ ...draft, title: event.target.value }))} placeholder="Children's Book Cover Collection" autoFocus /></label>
             <label>Category<select value={portfolioDraft.category} onChange={(event) => setPortfolioDraft((draft) => ({ ...draft, category: event.target.value }))}>{portfolioCategories.filter((category) => category.id !== "all").map((category) => <option value={category.id} key={category.id}>{category.label}</option>)}</select></label>
             <label>Image Number<input value={portfolioDraft.image} onChange={(event) => setPortfolioDraft((draft) => ({ ...draft, image: event.target.value }))} placeholder="03" /></label>
-            <label>Image URL or Asset Path<input value={portfolioDraft.imageUrl} onChange={(event) => setPortfolioDraft((draft) => ({ ...draft, imageUrl: event.target.value }))} placeholder="/media/uploads/project.jpg or https://..." /></label>
+            <label>Image or Video URL / Asset Path<input value={portfolioDraft.imageUrl} onChange={(event) => setPortfolioDraft((draft) => ({ ...draft, imageUrl: event.target.value }))} placeholder="/media/uploads/project.jpg, video.mp4, or https://..." /></label>
             <label>Client / Brand<input value={portfolioDraft.client} onChange={(event) => setPortfolioDraft((draft) => ({ ...draft, client: event.target.value }))} placeholder="Tangie Cokes" /></label>
             <label>Status<select value={portfolioDraft.status} onChange={(event) => setPortfolioDraft((draft) => ({ ...draft, status: event.target.value }))}><option>Draft</option><option>Visible</option><option>Featured</option><option>Archived</option></select></label>
             <label>Embedded / Project Link<input value={portfolioDraft.embedUrl} onChange={(event) => setPortfolioDraft((draft) => ({ ...draft, embedUrl: event.target.value }))} placeholder="Amazon, Canva, YouTube, Behance, etc." /></label>
+            <label>Action Button Label<input value={portfolioDraft.actionLabel} onChange={(event) => setPortfolioDraft((draft) => ({ ...draft, actionLabel: event.target.value }))} placeholder="View on Amazon, View Project, Visit Website" /></label>
             <label className="admin-modal-wide">Project Description<textarea value={portfolioDraft.description} onChange={(event) => setPortfolioDraft((draft) => ({ ...draft, description: event.target.value }))} placeholder="Add project notes, deliverables, client instructions, or case study details." /></label>
             <label className="admin-upload-box admin-click-upload admin-modal-wide">
               <Upload size={20} />
-              <strong>{portfolioDraft.imageFile ? portfolioDraft.imageFile.name : "Upload portfolio image"}</strong>
-              <span>Choose an image. It will upload to Django when you save.</span>
+              <strong>{portfolioDraft.imageFile ? portfolioDraft.imageFile.name : "Upload portfolio image or video"}</strong>
+              <span>Choose an image or video. It will upload to Django when you save.</span>
               <input
                 type="file"
-                accept="image/*"
-                onChange={(event) => setPortfolioDraft((draft) => ({ ...draft, imageFile: event.target.files?.[0] || null }))}
+                accept="image/*,video/*"
+                onChange={(event) => {
+                  const file = event.target.files?.[0] || null;
+                  setPortfolioDraft((draft) => ({ ...draft, imageFile: file, mediaType: file?.type?.startsWith("video/") ? "video" : "image" }));
+                }}
               />
             </label>
             {portfolioImagePreview && (
               <div className="admin-media-preview-grid admin-portfolio-preview">
-                <img src={portfolioImagePreview} alt="Portfolio preview" />
+                {portfolioDraft.mediaType === "video" || /\.(mp4|webm|ogg|mov)(?:$|[?#])/i.test(portfolioImagePreview) ? (
+                  <video src={portfolioImagePreview} controls muted playsInline />
+                ) : (
+                  <img src={portfolioImagePreview} alt="Portfolio preview" />
+                )}
               </div>
             )}
           </form>
@@ -5569,6 +6593,10 @@ function App() {
     document.title = "Checkout | Danajet";
     return <SiteExperience><CheckoutPage /></SiteExperience>;
   }
+  if (path === "/orders") {
+    document.title = "Your Orders | Danajet";
+    return <SiteExperience><OrdersPage /></SiteExperience>;
+  }
   if (path === "/login") {
     document.title = "Login | Danajet";
     return <SiteExperience><LoginPage /></SiteExperience>;
@@ -5576,6 +6604,14 @@ function App() {
   if (path === "/courses") {
     document.title = "Courses & Tutorials | Danajet Academy";
     return <SiteExperience><CoursesPage /></SiteExperience>;
+  }
+  if (path === "/community") {
+    document.title = "Danajet Community | Learn, Connect & Grow";
+    return <SiteExperience><CommunityPage /></SiteExperience>;
+  }
+  if (path === "/media") {
+    document.title = "Danajet Media | Stories Brought to Life";
+    return <SiteExperience><MediaPage /></SiteExperience>;
   }
   if (path === "/portfolio") {
     document.title = "Portfolio | Danajet BookLab";
