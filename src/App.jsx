@@ -89,6 +89,7 @@ import {
 } from "./api/cart";
 import { resolveMediaUrl } from "./api/client";
 import { subscribeToNewsletter } from "./api/newsletter";
+import { getBlogPost, getBlogPosts } from "./api/blog";
 import { getCourse, getCourses, getProduct, getProducts, getShopCategories, requestFreeResourceDownload } from "./api/shop";
 import { mockProducts, shopCategories } from "./data/products";
 
@@ -624,6 +625,37 @@ const mediaProductionDefaults = [
   { id: "production-8", title: "Danajet Promotional Film", category: "Promotions", youtubeUrl: "", displayOrder: 8 },
   { id: "production-9", title: "New Book Trailer", category: "Book Trailers", youtubeUrl: "", displayOrder: 9 },
   { id: "production-10", title: "Educational Documentary", category: "Educational Stories", youtubeUrl: "", displayOrder: 10 },
+];
+
+const privacyPolicySections = [
+  ["Introduction", "Danajet Nig. Ltd. ('Danajet', 'we', 'our') respects your privacy. This policy explains how we collect, use, store and protect information when you use our website, shop, academy, media pages or request our services."],
+  ["Information We Collect", "We may collect your name, email, phone number, billing details, project files, order information, newsletter subscriptions, device information, IP address, browser information and analytics data."],
+  ["How We Use Information", "To process orders, deliver products and services, communicate with you, improve the website, send newsletters (where subscribed), maintain records, prevent fraud and comply with legal obligations."],
+  ["Cookies", "We may use essential, analytics and marketing cookies. You can control cookies through your browser settings."],
+  ["Sharing Information", "We do not sell your personal information. We may share data with trusted service providers such as payment processors, hosting providers, email services, analytics providers and authorities where legally required."],
+  ["Security", "We implement reasonable administrative and technical safeguards, but no online system is completely secure."],
+  ["Data Retention", "Information is retained only as long as reasonably necessary for business, legal and accounting purposes."],
+  ["Your Rights", "Where applicable, you may request access, correction, deletion or restriction of your personal information and withdraw consent where applicable."],
+  ["Children's Privacy", "Products designed for children should be purchased or managed by a parent, guardian or educator. We do not knowingly collect children's personal information without appropriate consent."],
+  ["Third-Party Services", "Our website may link to Amazon, YouTube, Google and other third-party services governed by their own policies."],
+  ["Contact", "hello@danajet.com or danajetgroup@gmail.com"],
+];
+
+const termsSections = [
+  ["Acceptance", "By using this website you agree to these Terms and Conditions."],
+  ["Services", "Danajet provides book formatting, book design, publishing support, educational resources, digital downloads, media content and related creative services."],
+  ["Orders & Payments", "Orders are subject to acceptance and payment verification. Prices and availability may change."],
+  ["Digital Products", "Digital downloads are licensed for personal or authorized business use only and may not be redistributed without permission."],
+  ["Creative Services", "Project scope, pricing, milestones, revisions and timelines will be defined in the applicable quotation, proposal or agreement."],
+  ["Revisions", "Reasonable revisions are included only as agreed. Additional revisions may incur extra charges."],
+  ["Intellectual Property", "Clients retain ownership of their submitted content. Danajet retains ownership of internal tools, templates and methods unless otherwise agreed."],
+  ["Portfolio Rights", "Completed work may be displayed in Danajet's portfolio unless a written confidentiality agreement states otherwise."],
+  ["Refunds", "Digital products are generally non-refundable after delivery unless required by law or the product is defective. Service refunds depend on the applicable agreement."],
+  ["Third-Party Platforms", "We do not guarantee approval, rankings or revenue on Amazon KDP, YouTube or any third-party platform."],
+  ["Limitation of Liability", "To the maximum extent permitted by law, Danajet is not liable for indirect or consequential damages arising from website use or services."],
+  ["Governing Law", "These Terms are governed by the laws of the Federal Republic of Nigeria."],
+  ["Changes", "These Terms may be updated from time to time. The latest version will appear on the website."],
+  ["Contact", "hello@danajet.com or danajetgroup@gmail.com"],
 ];
 
 const testimonials = [
@@ -1700,6 +1732,167 @@ function CommunityPage() {
       <Header />
       <main>
         <CommunityHub />
+      </main>
+      <Footer />
+    </div>
+  );
+}
+
+function LegalPage({ initialSection = "privacy-policy" }) {
+  useEffect(() => {
+    const target = document.getElementById(initialSection);
+    if (target) window.requestAnimationFrame(() => target.scrollIntoView({ block: "start" }));
+  }, [initialSection]);
+
+  const renderLegalSections = (sections) => sections.map(([title, body], index) => (
+    <article className="legal-clause" key={title}>
+      <h3>{index + 1}. {title}</h3>
+      <p>{title === "Contact" ? (
+        <><a href="mailto:hello@danajet.com">hello@danajet.com</a> or <a href="mailto:danajetgroup@gmail.com">danajetgroup@gmail.com</a></>
+      ) : body}</p>
+    </article>
+  ));
+
+  return (
+    <div className="legal-page">
+      <Header />
+      <main>
+        <section className="legal-hero">
+          <div className="container legal-hero-inner">
+            <a className="portfolio-back" href="/"><ArrowRight size={16} /> Back to home</a>
+            <p className="eyebrow">Danajet Website</p>
+            <h1>Privacy Policy &amp; Terms &amp; Conditions</h1>
+            <p>Last updated: 22 July 2026</p>
+            <nav className="legal-jump-links" aria-label="Legal document sections">
+              <a className="button" href="#privacy-policy">Privacy Policy</a>
+              <a className="button button-outline" href="#terms-and-conditions">Terms &amp; Conditions</a>
+            </nav>
+          </div>
+        </section>
+        <section className="section legal-document-section">
+          <div className="container legal-document">
+            <section className="legal-policy-block" id="privacy-policy">
+              <p className="eyebrow">Your Information</p>
+              <h2>Privacy Policy</h2>
+              {renderLegalSections(privacyPolicySections)}
+            </section>
+            <section className="legal-policy-block" id="terms-and-conditions">
+              <p className="eyebrow">Website &amp; Services</p>
+              <h2>Terms &amp; Conditions</h2>
+              {renderLegalSections(termsSections)}
+            </section>
+          </div>
+        </section>
+      </main>
+      <Footer />
+    </div>
+  );
+}
+
+function formatBlogDate(value) {
+  if (!value) return "July 2026";
+  return new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "long", year: "numeric" }).format(new Date(value));
+}
+
+function BlogCard({ post }) {
+  return (
+    <article className="blog-card">
+      <a className="blog-card-image" href={`/blog/${post.slug}`} aria-label={`Read ${post.title}`}>
+        {post.imageUrl ? <img src={post.imageUrl} alt="" /> : <span><BookOpen size={44} /></span>}
+      </a>
+      <div className="blog-card-copy">
+        <p className="blog-card-meta"><span>{post.category}</span> {post.readTime}</p>
+        <h2><a href={`/blog/${post.slug}`}>{post.title}</a></h2>
+        <p>{post.excerpt}</p>
+        <a className="text-link" href={`/blog/${post.slug}`}>Read Article <ArrowRight size={15} /></a>
+      </div>
+    </article>
+  );
+}
+
+function BlogPage() {
+  const [posts, setPosts] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    let isMounted = true;
+    getBlogPosts()
+      .then((items) => isMounted && setPosts(items))
+      .catch(() => isMounted && setPosts([]))
+      .finally(() => isMounted && setIsLoading(false));
+    return () => { isMounted = false; };
+  }, []);
+
+  return (
+    <div className="blog-page">
+      <Header />
+      <main>
+        <section className="blog-hero">
+          <div className="container blog-hero-inner">
+            <p className="eyebrow">Danajet Blog</p>
+            <h1>Publishing, Design &amp; AI for Independent Authors.</h1>
+            <p>Practical guidance for authors and creators building professional books, publishing systems, and creative workflows.</p>
+          </div>
+        </section>
+        <section className="section blog-listing-section">
+          <div className="container">
+            {isLoading ? <LoadingSpinner label="Loading blog posts" /> : posts.length ? (
+              <div className="blog-grid">{posts.map((post) => <BlogCard post={post} key={post.id || post.slug} />)}</div>
+            ) : (
+              <div className="cart-empty"><h2>No blog posts found.</h2><p>New publishing and creative articles are coming soon.</p></div>
+            )}
+          </div>
+        </section>
+      </main>
+      <Footer />
+    </div>
+  );
+}
+
+function BlogArticleContent({ content }) {
+  return String(content || "").split(/\n\s*\n/).filter(Boolean).map((block, index) => {
+    const lines = block.split("\n").map((line) => line.trim()).filter(Boolean);
+    const isList = lines.every((line) => /^[•*-]\s+/.test(line));
+    const isHeading = lines.length === 1 && lines[0].length < 100 && (lines[0] === lines[0].toUpperCase() || /^\d+\.\s+/.test(lines[0]));
+    if (isHeading) return <h2 key={index}>{lines[0]}</h2>;
+    if (isList) return <ul key={index}>{lines.map((line) => <li key={line}>{line.replace(/^[•*-]\s+/, "")}</li>)}</ul>;
+    return <p key={index}>{lines.map((line, lineIndex) => <React.Fragment key={`${index}-${lineIndex}`}>{lineIndex > 0 && <br />}{line.replace(/^[•]\s*/, "")}</React.Fragment>)}</p>;
+  });
+}
+
+function BlogPostPage({ slug }) {
+  const [post, setPost] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    let isMounted = true;
+    getBlogPost(slug)
+      .then((item) => isMounted && setPost(item))
+      .catch(() => isMounted && setPost(null))
+      .finally(() => isMounted && setIsLoading(false));
+    return () => { isMounted = false; };
+  }, [slug]);
+
+  if (isLoading) return <div className="blog-page"><Header /><main className="product-not-found"><LoadingSpinner label="Loading article" /></main><Footer /></div>;
+  if (!post) return <div className="blog-page"><Header /><main className="product-not-found"><h1>Article not found.</h1><a className="button" href="/blog">Back to Blog</a></main><Footer /></div>;
+
+  return (
+    <div className="blog-page">
+      <Header />
+      <main>
+        <article className="blog-article">
+          <header className="blog-article-header">
+            <div className="container">
+              <a className="portfolio-back" href="/blog"><ArrowRight size={16} /> Back to Blog</a>
+              <p className="eyebrow">{post.category}</p>
+              <h1>{post.title}</h1>
+              <p className="blog-article-byline">By {post.author || "Danajet"} · {formatBlogDate(post.publishedDate)} · {post.readTime}</p>
+              <p className="blog-article-excerpt">{post.excerpt}</p>
+            </div>
+          </header>
+          {post.imageUrl && <div className="container blog-article-image"><img src={post.imageUrl} alt="" /></div>}
+          <div className="container blog-article-body"><BlogArticleContent content={post.content} /></div>
+        </article>
       </main>
       <Footer />
     </div>
@@ -3025,6 +3218,7 @@ function Footer() {
             {newsletterStatus && <p>{newsletterStatus}</p>}
           </form>
           <div className="socials">
+            <strong className="socials-label">Follow the Journey</strong>
             <a href={whatsappHref} aria-label="WhatsApp"><MessageCircle size={18} /></a>
             <a href={socialLinks.youtube} aria-label="YouTube"><Youtube /></a>
             <a href={socialLinks.linkedin} aria-label="LinkedIn"><Linkedin /></a>
@@ -3040,7 +3234,7 @@ function Footer() {
       </div>
       <div className="container footer-bottom">
         <p>© 2026 Danajet Nig. Ltd. All Rights Reserved.</p>
-        <div><a href="#privacy">Privacy Policy</a><a href="#terms">Terms & Conditions</a></div>
+        <div><a href="/privacy-policy">Privacy Policy</a><a href="/terms-and-conditions">Terms &amp; Conditions</a></div>
       </div>
     </footer>
   );
@@ -6572,6 +6766,7 @@ function App() {
   const path = window.location.pathname.replace(/\/+$/, "") || "/";
   const productMatch = path.match(/^\/shop\/([^/]+)$/);
   const courseMatch = path.match(/^\/courses\/([^/]+)$/);
+  const blogMatch = path.match(/^\/blog\/([^/]+)$/);
 
   if (productMatch) {
     document.title = "Book Details | Danajet Shop";
@@ -6580,6 +6775,10 @@ function App() {
   if (courseMatch) {
     document.title = "Course Details | Danajet Academy";
     return <SiteExperience><CourseDetailPage slug={decodeURIComponent(courseMatch[1])} /></SiteExperience>;
+  }
+  if (blogMatch) {
+    document.title = "Danajet Blog Article";
+    return <SiteExperience><BlogPostPage slug={decodeURIComponent(blogMatch[1])} /></SiteExperience>;
   }
   if (path === "/shop") {
     document.title = "Shop Books | Danajet";
@@ -6605,6 +6804,10 @@ function App() {
     document.title = "Courses & Tutorials | Danajet Academy";
     return <SiteExperience><CoursesPage /></SiteExperience>;
   }
+  if (path === "/blog") {
+    document.title = "Danajet Blog | Publishing, Design & AI";
+    return <SiteExperience><BlogPage /></SiteExperience>;
+  }
   if (path === "/community") {
     document.title = "Danajet Community | Learn, Connect & Grow";
     return <SiteExperience><CommunityPage /></SiteExperience>;
@@ -6612,6 +6815,14 @@ function App() {
   if (path === "/media") {
     document.title = "Danajet Media | Stories Brought to Life";
     return <SiteExperience><MediaPage /></SiteExperience>;
+  }
+  if (path === "/privacy-policy") {
+    document.title = "Privacy Policy | Danajet";
+    return <SiteExperience><LegalPage initialSection="privacy-policy" /></SiteExperience>;
+  }
+  if (path === "/terms-and-conditions") {
+    document.title = "Terms & Conditions | Danajet";
+    return <SiteExperience><LegalPage initialSection="terms-and-conditions" /></SiteExperience>;
   }
   if (path === "/portfolio") {
     document.title = "Portfolio | Danajet BookLab";
