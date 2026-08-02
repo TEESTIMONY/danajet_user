@@ -964,6 +964,20 @@ video.about-video-screen {
 .portfolio-page-hero h1 { max-width: 850px; margin-bottom: 24px; }
 .portfolio-contrast-stop { color: var(--black); }
 .portfolio-page-hero > .container > p:last-child { max-width: 700px; margin: 0; color: var(--muted); font-size: 17px; line-height: 1.7; }
+.portfolio-page .portfolio-page-hero .container {
+  max-width: 900px;
+  margin: 0 auto;
+  text-align: center;
+}
+.portfolio-page .portfolio-hero-kicker {
+  align-items: center;
+}
+.portfolio-page .portfolio-page-hero h1 {
+  margin: 0 auto 24px;
+}
+.portfolio-page .portfolio-page-hero > .container > p:last-child {
+  margin: 0 auto;
+}
 .about-page-section { background: var(--paper); }
 .about-page-section .about-story { margin-bottom: 0; }
 .about-page-hero {

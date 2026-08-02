@@ -257,7 +257,7 @@ const whatIDo = [
   {
     icon: Sparkles,
     number: "03",
-    title: "A+ Content & Authur Branding",
+    title: "A+ Content & Author Branding",
     copy: "Creative assets that help authors show up consistently and connect with readers.",
   },
   {
