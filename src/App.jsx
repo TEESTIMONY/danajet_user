@@ -1658,7 +1658,7 @@ function CommunityHub() {
         <div className="container">
           <div className="course-more-heading community-hub-heading">
             <p className="eyebrow">Danajet Community</p>
-            <h2>Learn. Connect. Grow Together.</h2>
+            <h2>Learn<span className="community-title-stop">.</span> Connect<span className="community-title-stop">.</span> Grow Together<span className="community-title-stop">.</span></h2>
             <p>The Danajet Community is a place for authors, designers, publishers, and creative minds to learn, ask questions, share ideas, and grow together.</p>
           </div>
           <div className="course-community-grid">
@@ -1948,8 +1948,8 @@ function MediaPage() {
         <section className="media-hero">
           <div className="container media-hero-inner">
             <p className="eyebrow">Danajet Media</p>
-            <h1>Bringing Stories to Life Through Video</h1>
-            <p>Explore my YouTube channels, book trailers, documentaries, and creative video productions.</p>
+            <h1>Bringing Stories to Life Through Videos<span className="media-orange-period">.</span></h1>
+            <p>Explore my YouTube channels, book trailers, documentaries,<br />and creative video productions.</p>
           </div>
         </section>
         <section className="section media-channels-section">

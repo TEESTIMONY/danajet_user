@@ -49,6 +49,9 @@ body, button, a { letter-spacing: 0; }
 .contact-orange-words {
   color: var(--orange);
 }
+.contact-orange-period {
+  display: inline;
+}
 .contact-black-period {
   color: #000;
 }
@@ -2149,10 +2152,20 @@ video.about-video-screen {
 }
 .community-hub-heading {
   max-width: 880px;
-  margin-bottom: 34px;
+  margin: 0 auto 34px;
+  text-align: center;
 }
+.community-hub-heading .eyebrow {
+  margin-left: auto;
+  margin-right: auto;
+}
+.community-hub-heading h2 {
+  margin: 12px auto 20px;
+}
+.community-title-stop { color: var(--orange); }
 .community-hub-heading > p:last-child {
   max-width: 760px;
+  margin: 0 auto;
   color: var(--muted);
   font-size: 18px;
   line-height: 1.7;
@@ -2181,9 +2194,6 @@ video.about-video-screen {
 @media (max-width: 640px) {
   .community-hub-section {
     padding-top: 64px;
-  }
-  .community-hub-heading {
-    text-align: center;
   }
   .community-hub-section .course-community-grid {
     grid-template-columns: 1fr;
@@ -2667,6 +2677,10 @@ video.about-video-screen {
   font-size: clamp(58px, 8vw, 112px);
   line-height: .88;
   text-transform: uppercase;
+}
+.media-orange-period {
+  display: inline;
+  color: var(--orange);
 }
 .media-hero > .media-hero-inner > p:last-child {
   max-width: 720px;
@@ -5678,6 +5692,10 @@ video.about-video-screen {
   background: transparent;
   color: var(--orange-dark);
 }
+:root[data-theme="dark"] .media-hero .eyebrow {
+  background: var(--orange);
+  color: #fff;
+}
 :root[data-theme="dark"] .button-outline,
 :root[data-theme="dark"] .text-link,
 :root[data-theme="dark"] .quantity-control,
@@ -6408,7 +6426,7 @@ video.about-video-screen {
   .about-focus-card h3 { margin-top: 26px; font-size: 28px; }
   .about-hero-details { gap: 8px; }
   .about-hero-details span { min-height: 34px; padding: 0 12px; font-size: 10px; }
-  .about-cta { align-items: flex-start; flex-direction: column; }
+  .about-cta { align-items: center; flex-direction: column; }
   .service-grid { grid-template-columns: 1fr; }
   .featured-work-list { grid-template-columns: 1fr; margin-bottom: 26px; }
   .featured-work-item { min-height: 74px; padding: 18px; }
