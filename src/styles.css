@@ -534,6 +534,7 @@ h1 em { display: block; color: var(--orange); font-style: normal; }
 .section-heading-side { display: flex; flex-direction: column; align-items: flex-start; gap: 18px; }
 .section-heading-side > p { margin: 0; color: var(--muted); line-height: 1.7; font-size: 15px; }
 .orange-text { color: var(--orange-dark); }
+.course-heading-stop { color: var(--ink); }
 .black-punctuation { color: var(--black); }
 .theme-stop { color: var(--black); }
 .danajet-journey { color: var(--black); font-weight: 700; }
@@ -730,6 +731,11 @@ video.about-video-screen {
   background: var(--card);
   border-right: 1px solid var(--line);
   border-bottom: 1px solid var(--line);
+  transition: background .25s ease, transform .25s ease;
+}
+.about-focus-card:hover {
+  background: var(--control-hover);
+  transform: translateY(-4px);
 }
 .about-focus-card h3 {
   margin: 34px 0 12px;
@@ -2973,6 +2979,9 @@ video.about-video-screen {
   }
   .media-hero h1 {
     font-size: 48px;
+  }
+  .media-subtitle-break {
+    display: none;
   }
   .media-production-card > strong {
     font-size: 15px;

@@ -216,8 +216,8 @@ function FlightPath({ variant = "wide", tone = "dark" }) {
 
 const navItems = [
   { label: "Home", href: "/#home" },
-  { label: "About", href: "/about", children: [{ label: "About Danajet", href: "/about" }, { label: "Testimonials", href: "/reviews" }, { label: "Transport", href: "/transport" }] },
-  { label: "BookLab", href: "/#booklab-services", children: [{ label: "Services", href: "/#booklab-services" }, { label: "Request a Project", href: "/request-project" }] },
+  { label: "About", href: "/about", children: [{ label: "👤 About Danajet", href: "/about" }, { label: "⭐ Testimonials", href: "/reviews" }, { label: "✈️ Transport", href: "/transport" }] },
+  { label: "BookLab", href: "/#booklab-services", children: [{ label: "🛠️ Services", href: "/#booklab-services" }, { label: "📝 Request a Project", href: "/request-project" }] },
   { label: "Portfolio", href: "/portfolio" },
   {
     label: "Shop",
@@ -232,9 +232,9 @@ const navItems = [
     label: "Academy",
     href: "/courses",
     children: [
-      { label: "Courses & Tutorials", href: "/courses" },
-      { label: "Community", href: "/community" },
-      { label: "Free Resources", href: "/community#free-resources" },
+      { label: "🎓 Courses & Tutorials", href: "/courses" },
+      { label: "👥 Community", href: "/community" },
+      { label: "🎁 Free Resources", href: "/community#free-resources" },
     ],
   },
   { label: "Media", href: "/media" },
@@ -1387,7 +1387,7 @@ function CourseCatalog({ showHeading = true }) {
       {showHeading && (
         <SectionHeading
           eyebrow="Courses & Tutorials"
-          title={<>Build better books with <span className="orange-text">practical learning.</span></>}
+          title={<>Build better books with <span className="orange-text">practical learning</span><span className="course-heading-stop">.</span></>}
           copy="Join the waitlist for mini-courses, templates, tutorials, and publishing resources from Danajet BookLab."
         />
       )}
@@ -1949,7 +1949,7 @@ function MediaPage() {
           <div className="container media-hero-inner">
             <p className="eyebrow">Danajet Media</p>
             <h1>Bringing Stories to Life Through Videos<span className="media-orange-period">.</span></h1>
-            <p>Explore my YouTube channels, book trailers, documentaries,<br />and creative video productions.</p>
+            <p>Explore my YouTube channels, book trailers, documentaries,<br className="media-subtitle-break" />and creative video productions.</p>
           </div>
         </section>
         <section className="section media-channels-section">
@@ -3402,18 +3402,22 @@ function AboutStory({ content = adminAboutDefaults }) {
     {
       name: "BookLab",
       text: "Book formatting, book design, Amazon KDP publishing support, workbooks, A+ content, and book trailers.",
+      href: "/#booklab-services",
     },
     {
       name: "Media",
       text: "Storytelling, digital content, and creative projects designed to inspire and connect with audiences.",
+      href: "/media",
     },
     {
       name: "Academy",
       text: "Practical learning for book creation, publishing, design, and digital creativity.",
+      href: "/courses",
     },
     {
       name: "Transport",
       text: "A future-facing dream for transportation, mobility, and solutions that move people forward.",
+      href: "/transport",
     },
   ];
 
@@ -3467,11 +3471,11 @@ function AboutStory({ content = adminAboutDefaults }) {
 
         <div className="about-focus-grid" aria-label="Danajet focus areas">
           {focusAreas.map((area, index) => (
-            <article className="about-focus-card" key={area.name}>
+            <a className="about-focus-card" href={area.href} key={area.name}>
               <span>{String(index + 1).padStart(2, "0")}</span>
               <h3>Danajet {area.name}</h3>
               <p>{area.text}</p>
-            </article>
+            </a>
           ))}
         </div>
 
