@@ -1949,7 +1949,7 @@ function MediaPage() {
           <div className="container media-hero-inner">
             <p className="eyebrow">Danajet Media</p>
             <h1>Bringing Stories to Life Through Videos<span className="media-orange-period">.</span></h1>
-            <p>Explore my YouTube channels, book trailers, documentaries,<br className="media-subtitle-break" />and creative video productions.</p>
+            <p>Explore my YouTube channels, book trailers, documentaries,<br className="media-subtitle-break" /> and creative video productions.</p>
           </div>
         </section>
         <section className="section media-channels-section">

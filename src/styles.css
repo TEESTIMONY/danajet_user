@@ -2526,6 +2526,8 @@ video.about-video-screen {
   text-align: center;
 }
 .blog-article-header .portfolio-back {
+  display: flex;
+  justify-content: center;
   width: fit-content;
   margin: 0 auto 34px;
 }
@@ -2600,6 +2602,8 @@ video.about-video-screen {
   text-align: center;
 }
 .legal-hero .portfolio-back {
+  display: flex;
+  justify-content: center;
   width: fit-content;
   margin: 0 auto 34px;
 }
@@ -6262,6 +6266,7 @@ video.about-video-screen {
   .course-detail-copy { text-align: center; }
   .course-detail-copy .academy-back,
   .course-detail-copy > .eyebrow { width: fit-content; margin-right: auto; margin-left: auto; }
+  .course-detail-copy .academy-back { display: flex; justify-content: center; }
   .course-detail-meta,
   .course-detail-actions { justify-content: center; }
   .course-detail-copy h1 { font-size: 48px; }
