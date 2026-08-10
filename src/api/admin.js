@@ -257,6 +257,73 @@ export async function deleteAdminShopCategory(item) {
   await apiRequest(endpoint("/api/categories/", item.slug || item.id), { method: "DELETE" });
 }
 
+export async function listAdminBlogCategories() {
+  const data = extractResults(await apiRequest("/api/categories/?category_type=blog&ordering=display_order,name"));
+  return data.map(normalizeCategory);
+}
+
+export function normalizeAdminBlogPost(post) {
+  return {
+    ...post,
+    apiId: post.id,
+    id: post.slug || post.id,
+    slug: post.slug,
+    title: post.title || "",
+    summary: post.summary || "",
+    excerpt: post.excerpt || "",
+    content: post.content || "",
+    author: post.author || "Danajet",
+    tags: post.tags || "",
+    readTime: post.read_time || "",
+    displayOrder: post.display_order || 0,
+    categoryId: post.category_ref || "",
+    categoryName: post.category_detail?.name || "",
+    image: resolveMediaUrl(post.metadata?.image_url || post.image || ""),
+    isPublished: post.is_published !== false,
+    status: post.is_published !== false ? "Published" : "Draft",
+    publishedAt: post.published_at ? post.published_at.slice(0, 10) : "",
+    date: post.published_at ? new Date(post.published_at).toLocaleDateString() : "Not published",
+  };
+}
+
+export async function listAdminBlogPosts() {
+  const data = extractResults(await apiRequest("/api/blog-posts/?ordering=-published_at"));
+  return data.map(normalizeAdminBlogPost);
+}
+
+export async function saveAdminBlogPost(draft, existingPost) {
+  const hasBackendPost = Boolean(existingPost?.apiId || existingPost?.slug);
+  const title = draft.title.trim() || "New Post";
+  const cover = draft.imageFile ? await uploadAdminMediaFile(draft.imageFile, "Blog post cover") : null;
+  const payload = {
+    title,
+    slug: hasBackendPost ? undefined : slugify(title),
+    summary: draft.summary.trim(),
+    excerpt: draft.excerpt.trim(),
+    content: draft.content,
+    author: draft.author.trim() || "Danajet",
+    tags: draft.tags.trim(),
+    read_time: draft.readTime.trim(),
+    display_order: Number(draft.displayOrder) || 0,
+    category_ref: draft.categoryId || null,
+    is_published: draft.isPublished,
+    published_at: draft.publishedAt ? new Date(draft.publishedAt).toISOString() : undefined,
+  };
+  if (cover?.path || draft.image) payload.metadata = { ...(existingPost?.metadata || {}), image_url: cover?.path || draft.image };
+  Object.keys(payload).forEach((key) => payload[key] === undefined && delete payload[key]);
+
+  const saved = await apiRequest(endpoint("/api/blog-posts/", hasBackendPost ? existingPost.slug || existingPost.id : null), {
+    method: hasBackendPost ? "PATCH" : "POST",
+    body: payload,
+  });
+  return normalizeAdminBlogPost(saved);
+}
+
+export async function deleteAdminBlogPost(post) {
+  if (!post?.apiId && !post?.slug) return;
+  await apiRequest(endpoint("/api/blog-posts/", post.slug || post.id), { method: "DELETE" });
+}
+
 export async function createAdminProduct(draft) {
   const product = await apiRequest("/api/products/", {
     method: "POST",

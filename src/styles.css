@@ -3522,6 +3522,7 @@ video.about-video-screen {
   text-transform: uppercase;
 }
 .checkout-grid input,
+.checkout-grid select,
 .checkout-grid textarea {
   width: 100%;
   min-height: 54px;
@@ -3535,6 +3536,19 @@ video.about-video-screen {
   min-height: 118px;
   padding: 14px 15px;
   resize: vertical;
+}
+.checkout-phone-field {
+  display: flex;
+  gap: 8px;
+}
+.checkout-phone-field select {
+  flex: 0 0 128px;
+  min-width: 0;
+  padding: 0 8px;
+}
+.checkout-phone-field input {
+  flex: 1;
+  min-width: 0;
 }
 .checkout-wide {
   grid-column: 1 / -1;
@@ -5382,6 +5396,9 @@ video.about-video-screen {
   min-height: 115px;
   padding: 12px;
   resize: vertical;
+}
+.admin-modal-form .admin-blog-content-field {
+  min-height: 340px;
 }
 .admin-modal-form .admin-check-field {
   min-height: 43px;

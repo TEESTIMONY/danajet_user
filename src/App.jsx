@@ -50,6 +50,7 @@ import {
   X as LucideX,
 } from "lucide-react";
 import {
+  deleteAdminBlogPost,
   deleteAdminBrand,
   deleteAdminCourse,
   deleteAdminMedia,
@@ -57,6 +58,8 @@ import {
   deleteAdminProduct,
   deleteAdminReview,
   deleteAdminShopCategory,
+  listAdminBlogCategories,
+  listAdminBlogPosts,
   listAdminBrands,
   listAdminContactMessages,
   listAdminCourses,
@@ -69,6 +72,7 @@ import {
   listAdminSettings,
   listAdminShopCategories,
   listAdminTransportWaitlist,
+  saveAdminBlogPost,
   saveAdminCourse,
   saveAdminBrand,
   saveAdminMedia,
@@ -489,6 +493,213 @@ const timelineOptions = ["ASAP", "Within 1 week", "Within 2-4 weeks", "1-3 month
 const referralOptions = ["Google Search", "Amazon Books", "YouTube", "Tiktok", "Facebook", "Referral", "Previous Client"];
 const contactMethodOptions = ["WhatsApp", "Email"];
 const manuscriptOptions = ["Yes, I will upload it now", "Yes, I will send it later", "No, I am still working on it"];
+
+const COUNTRIES = [
+  { name: "Nigeria", code: "NG", dialCode: "+234" },
+  { name: "United States", code: "US", dialCode: "+1" },
+  { name: "United Kingdom", code: "GB", dialCode: "+44" },
+  { name: "Canada", code: "CA", dialCode: "+1" },
+  { name: "Afghanistan", code: "AF", dialCode: "+93" },
+  { name: "Albania", code: "AL", dialCode: "+355" },
+  { name: "Algeria", code: "DZ", dialCode: "+213" },
+  { name: "Andorra", code: "AD", dialCode: "+376" },
+  { name: "Angola", code: "AO", dialCode: "+244" },
+  { name: "Argentina", code: "AR", dialCode: "+54" },
+  { name: "Armenia", code: "AM", dialCode: "+374" },
+  { name: "Australia", code: "AU", dialCode: "+61" },
+  { name: "Austria", code: "AT", dialCode: "+43" },
+  { name: "Azerbaijan", code: "AZ", dialCode: "+994" },
+  { name: "Bahamas", code: "BS", dialCode: "+1" },
+  { name: "Bahrain", code: "BH", dialCode: "+973" },
+  { name: "Bangladesh", code: "BD", dialCode: "+880" },
+  { name: "Barbados", code: "BB", dialCode: "+1" },
+  { name: "Belarus", code: "BY", dialCode: "+375" },
+  { name: "Belgium", code: "BE", dialCode: "+32" },
+  { name: "Belize", code: "BZ", dialCode: "+501" },
+  { name: "Benin", code: "BJ", dialCode: "+229" },
+  { name: "Bhutan", code: "BT", dialCode: "+975" },
+  { name: "Bolivia", code: "BO", dialCode: "+591" },
+  { name: "Bosnia and Herzegovina", code: "BA", dialCode: "+387" },
+  { name: "Botswana", code: "BW", dialCode: "+267" },
+  { name: "Brazil", code: "BR", dialCode: "+55" },
+  { name: "Brunei", code: "BN", dialCode: "+673" },
+  { name: "Bulgaria", code: "BG", dialCode: "+359" },
+  { name: "Burkina Faso", code: "BF", dialCode: "+226" },
+  { name: "Burundi", code: "BI", dialCode: "+257" },
+  { name: "Cabo Verde", code: "CV", dialCode: "+238" },
+  { name: "Cambodia", code: "KH", dialCode: "+855" },
+  { name: "Cameroon", code: "CM", dialCode: "+237" },
+  { name: "Central African Republic", code: "CF", dialCode: "+236" },
+  { name: "Chad", code: "TD", dialCode: "+235" },
+  { name: "Chile", code: "CL", dialCode: "+56" },
+  { name: "China", code: "CN", dialCode: "+86" },
+  { name: "Colombia", code: "CO", dialCode: "+57" },
+  { name: "Comoros", code: "KM", dialCode: "+269" },
+  { name: "Congo (DRC)", code: "CD", dialCode: "+243" },
+  { name: "Congo (Republic)", code: "CG", dialCode: "+242" },
+  { name: "Costa Rica", code: "CR", dialCode: "+506" },
+  { name: "Croatia", code: "HR", dialCode: "+385" },
+  { name: "Cuba", code: "CU", dialCode: "+53" },
+  { name: "Cyprus", code: "CY", dialCode: "+357" },
+  { name: "Czechia", code: "CZ", dialCode: "+420" },
+  { name: "Denmark", code: "DK", dialCode: "+45" },
+  { name: "Djibouti", code: "DJ", dialCode: "+253" },
+  { name: "Dominica", code: "DM", dialCode: "+1" },
+  { name: "Dominican Republic", code: "DO", dialCode: "+1" },
+  { name: "Ecuador", code: "EC", dialCode: "+593" },
+  { name: "Egypt", code: "EG", dialCode: "+20" },
+  { name: "El Salvador", code: "SV", dialCode: "+503" },
+  { name: "Equatorial Guinea", code: "GQ", dialCode: "+240" },
+  { name: "Eritrea", code: "ER", dialCode: "+291" },
+  { name: "Estonia", code: "EE", dialCode: "+372" },
+  { name: "Eswatini", code: "SZ", dialCode: "+268" },
+  { name: "Ethiopia", code: "ET", dialCode: "+251" },
+  { name: "Fiji", code: "FJ", dialCode: "+679" },
+  { name: "Finland", code: "FI", dialCode: "+358" },
+  { name: "France", code: "FR", dialCode: "+33" },
+  { name: "Gabon", code: "GA", dialCode: "+241" },
+  { name: "Gambia", code: "GM", dialCode: "+220" },
+  { name: "Georgia", code: "GE", dialCode: "+995" },
+  { name: "Germany", code: "DE", dialCode: "+49" },
+  { name: "Ghana", code: "GH", dialCode: "+233" },
+  { name: "Greece", code: "GR", dialCode: "+30" },
+  { name: "Grenada", code: "GD", dialCode: "+1" },
+  { name: "Guatemala", code: "GT", dialCode: "+502" },
+  { name: "Guinea", code: "GN", dialCode: "+224" },
+  { name: "Guinea-Bissau", code: "GW", dialCode: "+245" },
+  { name: "Guyana", code: "GY", dialCode: "+592" },
+  { name: "Haiti", code: "HT", dialCode: "+509" },
+  { name: "Honduras", code: "HN", dialCode: "+504" },
+  { name: "Hungary", code: "HU", dialCode: "+36" },
+  { name: "Iceland", code: "IS", dialCode: "+354" },
+  { name: "India", code: "IN", dialCode: "+91" },
+  { name: "Indonesia", code: "ID", dialCode: "+62" },
+  { name: "Iran", code: "IR", dialCode: "+98" },
+  { name: "Iraq", code: "IQ", dialCode: "+964" },
+  { name: "Ireland", code: "IE", dialCode: "+353" },
+  { name: "Israel", code: "IL", dialCode: "+972" },
+  { name: "Italy", code: "IT", dialCode: "+39" },
+  { name: "Jamaica", code: "JM", dialCode: "+1" },
+  { name: "Japan", code: "JP", dialCode: "+81" },
+  { name: "Jordan", code: "JO", dialCode: "+962" },
+  { name: "Kazakhstan", code: "KZ", dialCode: "+7" },
+  { name: "Kenya", code: "KE", dialCode: "+254" },
+  { name: "Kiribati", code: "KI", dialCode: "+686" },
+  { name: "Kuwait", code: "KW", dialCode: "+965" },
+  { name: "Kyrgyzstan", code: "KG", dialCode: "+996" },
+  { name: "Laos", code: "LA", dialCode: "+856" },
+  { name: "Latvia", code: "LV", dialCode: "+371" },
+  { name: "Lebanon", code: "LB", dialCode: "+961" },
+  { name: "Lesotho", code: "LS", dialCode: "+266" },
+  { name: "Liberia", code: "LR", dialCode: "+231" },
+  { name: "Libya", code: "LY", dialCode: "+218" },
+  { name: "Liechtenstein", code: "LI", dialCode: "+423" },
+  { name: "Lithuania", code: "LT", dialCode: "+370" },
+  { name: "Luxembourg", code: "LU", dialCode: "+352" },
+  { name: "Madagascar", code: "MG", dialCode: "+261" },
+  { name: "Malawi", code: "MW", dialCode: "+265" },
+  { name: "Malaysia", code: "MY", dialCode: "+60" },
+  { name: "Maldives", code: "MV", dialCode: "+960" },
+  { name: "Mali", code: "ML", dialCode: "+223" },
+  { name: "Malta", code: "MT", dialCode: "+356" },
+  { name: "Mauritania", code: "MR", dialCode: "+222" },
+  { name: "Mauritius", code: "MU", dialCode: "+230" },
+  { name: "Mexico", code: "MX", dialCode: "+52" },
+  { name: "Moldova", code: "MD", dialCode: "+373" },
+  { name: "Monaco", code: "MC", dialCode: "+377" },
+  { name: "Mongolia", code: "MN", dialCode: "+976" },
+  { name: "Montenegro", code: "ME", dialCode: "+382" },
+  { name: "Morocco", code: "MA", dialCode: "+212" },
+  { name: "Mozambique", code: "MZ", dialCode: "+258" },
+  { name: "Myanmar", code: "MM", dialCode: "+95" },
+  { name: "Namibia", code: "NA", dialCode: "+264" },
+  { name: "Nepal", code: "NP", dialCode: "+977" },
+  { name: "Netherlands", code: "NL", dialCode: "+31" },
+  { name: "New Zealand", code: "NZ", dialCode: "+64" },
+  { name: "Nicaragua", code: "NI", dialCode: "+505" },
+  { name: "Niger", code: "NE", dialCode: "+227" },
+  { name: "North Korea", code: "KP", dialCode: "+850" },
+  { name: "North Macedonia", code: "MK", dialCode: "+389" },
+  { name: "Norway", code: "NO", dialCode: "+47" },
+  { name: "Oman", code: "OM", dialCode: "+968" },
+  { name: "Pakistan", code: "PK", dialCode: "+92" },
+  { name: "Panama", code: "PA", dialCode: "+507" },
+  { name: "Papua New Guinea", code: "PG", dialCode: "+675" },
+  { name: "Paraguay", code: "PY", dialCode: "+595" },
+  { name: "Peru", code: "PE", dialCode: "+51" },
+  { name: "Philippines", code: "PH", dialCode: "+63" },
+  { name: "Poland", code: "PL", dialCode: "+48" },
+  { name: "Portugal", code: "PT", dialCode: "+351" },
+  { name: "Qatar", code: "QA", dialCode: "+974" },
+  { name: "Romania", code: "RO", dialCode: "+40" },
+  { name: "Russia", code: "RU", dialCode: "+7" },
+  { name: "Rwanda", code: "RW", dialCode: "+250" },
+  { name: "Saint Lucia", code: "LC", dialCode: "+1" },
+  { name: "Samoa", code: "WS", dialCode: "+685" },
+  { name: "San Marino", code: "SM", dialCode: "+378" },
+  { name: "Saudi Arabia", code: "SA", dialCode: "+966" },
+  { name: "Senegal", code: "SN", dialCode: "+221" },
+  { name: "Serbia", code: "RS", dialCode: "+381" },
+  { name: "Seychelles", code: "SC", dialCode: "+248" },
+  { name: "Sierra Leone", code: "SL", dialCode: "+232" },
+  { name: "Singapore", code: "SG", dialCode: "+65" },
+  { name: "Slovakia", code: "SK", dialCode: "+421" },
+  { name: "Slovenia", code: "SI", dialCode: "+386" },
+  { name: "Somalia", code: "SO", dialCode: "+252" },
+  { name: "South Africa", code: "ZA", dialCode: "+27" },
+  { name: "South Korea", code: "KR", dialCode: "+82" },
+  { name: "South Sudan", code: "SS", dialCode: "+211" },
+  { name: "Spain", code: "ES", dialCode: "+34" },
+  { name: "Sri Lanka", code: "LK", dialCode: "+94" },
+  { name: "Sudan", code: "SD", dialCode: "+249" },
+  { name: "Suriname", code: "SR", dialCode: "+597" },
+  { name: "Sweden", code: "SE", dialCode: "+46" },
+  { name: "Switzerland", code: "CH", dialCode: "+41" },
+  { name: "Syria", code: "SY", dialCode: "+963" },
+  { name: "Taiwan", code: "TW", dialCode: "+886" },
+  { name: "Tajikistan", code: "TJ", dialCode: "+992" },
+  { name: "Tanzania", code: "TZ", dialCode: "+255" },
+  { name: "Thailand", code: "TH", dialCode: "+66" },
+  { name: "Togo", code: "TG", dialCode: "+228" },
+  { name: "Tonga", code: "TO", dialCode: "+676" },
+  { name: "Trinidad and Tobago", code: "TT", dialCode: "+1" },
+  { name: "Tunisia", code: "TN", dialCode: "+216" },
+  { name: "Turkey", code: "TR", dialCode: "+90" },
+  { name: "Turkmenistan", code: "TM", dialCode: "+993" },
+  { name: "Uganda", code: "UG", dialCode: "+256" },
+  { name: "Ukraine", code: "UA", dialCode: "+380" },
+  { name: "United Arab Emirates", code: "AE", dialCode: "+971" },
+  { name: "Uruguay", code: "UY", dialCode: "+598" },
+  { name: "Uzbekistan", code: "UZ", dialCode: "+998" },
+  { name: "Vanuatu", code: "VU", dialCode: "+678" },
+  { name: "Vatican City", code: "VA", dialCode: "+379" },
+  { name: "Venezuela", code: "VE", dialCode: "+58" },
+  { name: "Vietnam", code: "VN", dialCode: "+84" },
+  { name: "Yemen", code: "YE", dialCode: "+967" },
+  { name: "Zambia", code: "ZM", dialCode: "+260" },
+  { name: "Zimbabwe", code: "ZW", dialCode: "+263" },
+];
+
+const STATES_BY_COUNTRY = {
+  NG: [
+    "Abia", "Adamawa", "Akwa Ibom", "Anambra", "Bauchi", "Bayelsa", "Benue", "Borno",
+    "Cross River", "Delta", "Ebonyi", "Edo", "Ekiti", "Enugu", "Gombe", "Imo", "Jigawa",
+    "Kaduna", "Kano", "Katsina", "Kebbi", "Kogi", "Kwara", "Lagos", "Nasarawa", "Niger",
+    "Ogun", "Ondo", "Osun", "Oyo", "Plateau", "Rivers", "Sokoto", "Taraba", "Yobe",
+    "Zamfara", "Federal Capital Territory",
+  ],
+  US: [
+    "Alabama", "Alaska", "Arizona", "Arkansas", "California", "Colorado", "Connecticut",
+    "Delaware", "Florida", "Georgia", "Hawaii", "Idaho", "Illinois", "Indiana", "Iowa",
+    "Kansas", "Kentucky", "Louisiana", "Maine", "Maryland", "Massachusetts", "Michigan",
+    "Minnesota", "Mississippi", "Missouri", "Montana", "Nebraska", "Nevada",
+    "New Hampshire", "New Jersey", "New Mexico", "New York", "North Carolina",
+    "North Dakota", "Ohio", "Oklahoma", "Oregon", "Pennsylvania", "Rhode Island",
+    "South Carolina", "South Dakota", "Tennessee", "Texas", "Utah", "Vermont",
+    "Virginia", "Washington", "West Virginia", "Wisconsin", "Wyoming",
+    "District of Columbia",
+  ],
+};
 
 const shopPathways = [
   {
@@ -2767,6 +2978,9 @@ function CheckoutPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [internationalReceiptFile, setInternationalReceiptFile] = useState(null);
   const [ngReceiptFile, setNgReceiptFile] = useState(null);
+  const [selectedCountryCode, setSelectedCountryCode] = useState("");
+  const [selectedState, setSelectedState] = useState("");
+  const [selectedDialCode, setSelectedDialCode] = useState("+234");
   const [currency] = useCurrency();
   const footerSettings = useFooterSettings();
   const subtotal = cart.reduce((total, item) => total + Number(item.price || 0) * item.quantity, 0);
@@ -2798,16 +3012,19 @@ function CheckoutPage() {
   const handleDetailsSubmit = (event) => {
     event.preventDefault();
     const formData = new FormData(event.currentTarget);
+    const countryName = COUNTRIES.find((country) => country.code === selectedCountryCode)?.name || "";
+    const localPhone = String(formData.get("phone") || "").trim();
     setCustomerDetails({
       email: formData.get("email"),
-      phone: formData.get("phone") || "",
+      phone: localPhone ? `${selectedDialCode} ${localPhone}` : "",
       first_name: formData.get("firstName"),
       last_name: formData.get("lastName"),
-      country: formData.get("country") || "",
+      country: countryName,
       notes: formData.get("notes") || "",
       shipping_total: "0.00",
       shipping_address: {
-        country: formData.get("country") || "",
+        country: countryName,
+        state: selectedState,
       },
     });
     setCheckoutStep("payment");
@@ -2849,7 +3066,7 @@ function CheckoutPage() {
 
   const genericWhatsappDigits = String(footerSettings.whatsapp || "").replace(/\D/g, "");
   const genericWhatsappHref = genericWhatsappDigits.length >= 7
-    ? `https://wa.me/${genericWhatsappDigits}?text=${encodeURIComponent("Hello Danajet, I have a question about my payment.")}`
+    ? `https://wa.me/${genericWhatsappDigits}?text=${encodeURIComponent("Hello Danajet, I just made payment and here is my receipt.")}`
     : "/contact#whatsapp";
 
   return (
@@ -2950,8 +3167,45 @@ function CheckoutPage() {
                         <label>First name<input name="firstName" autoComplete="given-name" required /></label>
                         <label>Last name<input name="lastName" autoComplete="family-name" required /></label>
                         <label>Email address<input name="email" type="email" autoComplete="email" required /></label>
-                        <label>Phone number<input name="phone" type="tel" autoComplete="tel" required /></label>
-                        <label>Country<input name="country" autoComplete="country-name" required /></label>
+                        <label>
+                          Phone number
+                          <div className="checkout-phone-field">
+                            <select value={selectedDialCode} onChange={(event) => setSelectedDialCode(event.target.value)} aria-label="Country calling code">
+                              {COUNTRIES.map((country) => <option value={country.dialCode} key={`${country.code}-dial`}>{country.dialCode} {country.name}</option>)}
+                            </select>
+                            <input name="phone" type="tel" autoComplete="tel" placeholder="8103691930" required />
+                          </div>
+                        </label>
+                        <label>
+                          Country
+                          <select
+                            name="country"
+                            autoComplete="country-name"
+                            required
+                            value={selectedCountryCode}
+                            onChange={(event) => {
+                              const code = event.target.value;
+                              setSelectedCountryCode(code);
+                              setSelectedState("");
+                              const match = COUNTRIES.find((country) => country.code === code);
+                              if (match) setSelectedDialCode(match.dialCode);
+                            }}
+                          >
+                            <option value="" disabled>Select a country</option>
+                            {COUNTRIES.map((country) => <option value={country.code} key={country.code}>{country.name}</option>)}
+                          </select>
+                        </label>
+                        <label>
+                          State / Region
+                          {STATES_BY_COUNTRY[selectedCountryCode] ? (
+                            <select value={selectedState} onChange={(event) => setSelectedState(event.target.value)}>
+                              <option value="">Select a state</option>
+                              {STATES_BY_COUNTRY[selectedCountryCode].map((state) => <option value={state} key={state}>{state}</option>)}
+                            </select>
+                          ) : (
+                            <input value={selectedState} onChange={(event) => setSelectedState(event.target.value)} placeholder="State, province, or region" />
+                          )}
+                        </label>
                         <label className="checkout-wide">Order notes<textarea name="notes" placeholder="Delivery notes, project notes, or anything else we should know." /></label>
                       </div>
                       <div className="checkout-payment-panel">
@@ -4582,6 +4836,7 @@ const adminNavItems = [
   { id: "courses", label: "Courses", icon: MonitorPlay },
   { id: "course-categories", label: "Course Categories", icon: Layers3 },
   { id: "portfolio", label: "Portfolio", icon: ImageIcon },
+  { id: "blog-posts", label: "Blog Posts", icon: BookOpen },
   { id: "brands-control", label: "Brands & Media", icon: Play },
   { id: "reviews", label: "Reviews", icon: Users },
   { id: "requests", label: "Project Requests", icon: Inbox },
@@ -4858,6 +5113,40 @@ function AdminPortfolioPanel({ portfolioItems, onAddPortfolioItem, onEditPortfol
         ))}
       </div>
       {visiblePortfolioItems.length === 0 && <AdminEmptyState copy="No portfolio projects match your current search." />}
+    </section>
+  );
+}
+
+function AdminBlogPostsPanel({ posts, onAddPost, onEditPost, onDeletePost, query }) {
+  const visiblePosts = posts.filter((post) =>
+    `${post.title} ${post.categoryName} ${post.tags} ${post.author}`.toLowerCase().includes(query)
+  );
+
+  return (
+    <section className="admin-panel">
+      <AdminSectionHeader
+        eyebrow="Content"
+        title="Blog posts"
+        copy="Write, edit, publish, and reorder articles. Changes here update the live Blog page immediately."
+        action={<AdminActionButton onClick={onAddPost}>Add Blog Post</AdminActionButton>}
+      />
+      <div className="admin-table">
+        <div className="admin-table-row admin-table-head"><span>Title</span><span>Category</span><span>Author</span><span>Published</span><span>Status</span><span>Actions</span></div>
+        {visiblePosts.map((post) => (
+          <div className="admin-table-row" key={post.id}>
+            <span><strong>{post.title}</strong><small>{post.readTime}</small></span>
+            <span>{post.categoryName || "Uncategorized"}</span>
+            <span>{post.author}</span>
+            <span>{post.date}</span>
+            <span><mark>{post.status}</mark></span>
+            <span className="admin-row-actions">
+              <button type="button" onClick={() => onEditPost(post)} aria-label={`Edit ${post.title}`}><Edit3 size={15} /></button>
+              <button type="button" onClick={() => onDeletePost(post.id)} aria-label={`Delete ${post.title}`}><Trash2 size={15} /></button>
+            </span>
+          </div>
+        ))}
+      </div>
+      {visiblePosts.length === 0 && <AdminEmptyState copy="No blog posts match your current search." />}
     </section>
   );
 }
@@ -5394,6 +5683,25 @@ function AdminDashboardPage({ onLogout }) {
     projects.slice(0, 9).map((project, index) => ({ ...project, id: `portfolio-${index}` }))
   );
   const [adminReviews, setAdminReviews] = useState(() => testimonials.map((review, index) => ({ ...review, id: `review-${index}`, rating: 5 })));
+  const [adminBlogPosts, setAdminBlogPosts] = useState([]);
+  const [adminBlogCategories, setAdminBlogCategories] = useState([]);
+  const [editingBlogPostId, setEditingBlogPostId] = useState(null);
+  const [blogPostImagePreview, setBlogPostImagePreview] = useState("");
+  const [blogPostDraft, setBlogPostDraft] = useState({
+    title: "",
+    summary: "",
+    excerpt: "",
+    content: "",
+    author: "Danajet",
+    tags: "",
+    readTime: "",
+    displayOrder: 0,
+    categoryId: "",
+    isPublished: true,
+    publishedAt: new Date().toISOString().slice(0, 10),
+    image: "",
+    imageFile: null,
+  });
   const [adminRequests, setAdminRequests] = useState(adminProjectRequests);
   const [adminOrders, setAdminOrders] = useState([]);
   const [adminContactMessages, setAdminContactMessages] = useState([]);
@@ -5747,11 +6055,21 @@ function AdminDashboardPage({ onLogout }) {
   }, [reviewDraft.imageFile, reviewDraft.image]);
 
   useEffect(() => {
+    if (!blogPostDraft.imageFile) {
+      setBlogPostImagePreview(blogPostDraft.image || "");
+      return undefined;
+    }
+    const previewUrl = URL.createObjectURL(blogPostDraft.imageFile);
+    setBlogPostImagePreview(previewUrl);
+    return () => URL.revokeObjectURL(previewUrl);
+  }, [blogPostDraft.imageFile, blogPostDraft.image]);
+
+  useEffect(() => {
     let isMounted = true;
     async function loadAdminData() {
       setAdminDataLoading(true);
       try {
-        const [products, courses, portfolioItems, reviews, requests, mediaAssets, shopCategoryItems, brandItems, settings, orders, contactMessages, transportSignups] = await Promise.all([
+        const [products, courses, portfolioItems, reviews, requests, mediaAssets, shopCategoryItems, brandItems, settings, orders, contactMessages, transportSignups, blogPosts, blogCategories] = await Promise.all([
           listAdminProducts(),
           listAdminCourses(),
           listAdminPortfolio(),
@@ -5764,6 +6082,8 @@ function AdminDashboardPage({ onLogout }) {
           listAdminOrders().catch(() => []),
           listAdminContactMessages().catch(() => []),
           listAdminTransportWaitlist().catch(() => []),
+          listAdminBlogPosts().catch(() => []),
+          listAdminBlogCategories().catch(() => []),
         ]);
 
         let loadedPortfolioItems = portfolioItems;
@@ -5802,6 +6122,8 @@ function AdminDashboardPage({ onLogout }) {
         setAdminOrders(orders);
         setAdminContactMessages(contactMessages);
         setAdminTransportSignups(transportSignups);
+        setAdminBlogPosts(blogPosts);
+        setAdminBlogCategories(blogCategories);
         setAdminMediaLibrary(mediaAssets);
         if (shopCategoryItems.length) setAdminShopCategoryItems(shopCategoryItems);
         if (brandItems.length) setAdminBrandSections(brandItems);
@@ -5912,6 +6234,83 @@ function AdminDashboardPage({ onLogout }) {
       image: "",
       imageFile: null,
     });
+  };
+
+  const resetBlogPostDraft = () => {
+    setBlogPostDraft({
+      title: "",
+      summary: "",
+      excerpt: "",
+      content: "",
+      author: "Danajet",
+      tags: "",
+      readTime: "",
+      displayOrder: 0,
+      categoryId: "",
+      isPublished: true,
+      publishedAt: new Date().toISOString().slice(0, 10),
+      image: "",
+      imageFile: null,
+    });
+  };
+
+  const handleOpenBlogPostModal = () => {
+    resetBlogPostDraft();
+    setEditingBlogPostId(null);
+    setActiveAdminModal("blog-post");
+  };
+
+  const handleOpenEditBlogPostModal = (post) => {
+    setBlogPostDraft({
+      title: post.title || "",
+      summary: post.summary || "",
+      excerpt: post.excerpt || "",
+      content: post.content || "",
+      author: post.author || "Danajet",
+      tags: post.tags || "",
+      readTime: post.readTime || "",
+      displayOrder: post.displayOrder || 0,
+      categoryId: post.categoryId || "",
+      isPublished: post.isPublished !== false,
+      publishedAt: post.publishedAt || new Date().toISOString().slice(0, 10),
+      image: post.image || "",
+      imageFile: null,
+    });
+    setEditingBlogPostId(post.id);
+    setActiveAdminModal("blog-post");
+  };
+
+  const handleSaveBlogPost = async (event) => {
+    event.preventDefault();
+    const title = blogPostDraft.title.trim() || "New Post";
+    const selectedPost = adminBlogPosts.find((post) => post.id === editingBlogPostId);
+    const existingPost = selectedPost?.apiId || selectedPost?.slug ? selectedPost : null;
+    try {
+      const savedPost = await saveAdminBlogPost(blogPostDraft, existingPost);
+      if (selectedPost) {
+        setAdminBlogPosts((current) => current.map((post) => (post.id === editingBlogPostId ? savedPost : post)));
+        showAdminNotice(`"${title}" updated in Django.`);
+      } else {
+        setAdminBlogPosts((current) => [savedPost, ...current]);
+        showAdminNotice(`"${title}" saved to Django.`);
+      }
+      setActiveAdminModal(null);
+      setEditingBlogPostId(null);
+    } catch (error) {
+      showAdminNotice(`${error.message || "Post could not be saved."} Make sure you are logged in as staff.`);
+    }
+  };
+
+  const handleDeleteBlogPost = async (id) => {
+    const post = adminBlogPosts.find((item) => item.id === id);
+    if (!post) return;
+    try {
+      await deleteAdminBlogPost(post);
+      setAdminBlogPosts((current) => current.filter((item) => item.id !== id));
+      showAdminNotice("Post deleted from Django.");
+    } catch (error) {
+      showAdminNotice(`${error.message || "Post could not be deleted."} Make sure you are logged in as staff.`);
+    }
   };
 
   const handleOpenBookModal = () => {
@@ -6443,6 +6842,7 @@ function AdminDashboardPage({ onLogout }) {
       />
     );
     if (activeAdminSection === "portfolio") return <AdminPortfolioPanel portfolioItems={adminPortfolioItems} onAddPortfolioItem={handleOpenPortfolioModal} onEditPortfolioItem={handleOpenEditPortfolioModal} onDeletePortfolioItem={handleDeletePortfolioItem} query={normalizedAdminSearch} />;
+    if (activeAdminSection === "blog-posts") return <AdminBlogPostsPanel posts={adminBlogPosts} onAddPost={handleOpenBlogPostModal} onEditPost={handleOpenEditBlogPostModal} onDeletePost={handleDeleteBlogPost} query={normalizedAdminSearch} />;
     if (activeAdminSection === "brands-control") return (
       <AdminCollectionPanel
         eyebrow="Brand ecosystem"
@@ -7012,6 +7412,50 @@ function AdminDashboardPage({ onLogout }) {
             {reviewImagePreview && (
               <div className="admin-media-preview-grid admin-review-preview">
                 <img src={reviewImagePreview} alt="Reviewer preview" />
+              </div>
+            )}
+          </form>
+        </AdminModal>
+      )}
+      {activeAdminModal === "blog-post" && (
+        <AdminModal
+          eyebrow="Content"
+          title={editingBlogPostId ? "Edit blog post" : "Add blog post"}
+          onClose={() => {
+            setActiveAdminModal(null);
+            setEditingBlogPostId(null);
+          }}
+          footer={(
+            <>
+              <button type="button" onClick={() => {
+                setActiveAdminModal(null);
+                setEditingBlogPostId(null);
+              }}>Cancel</button>
+              <button type="submit" form="admin-blog-post-form"><Save size={16} /> {editingBlogPostId ? "Save Changes" : "Add Blog Post"}</button>
+            </>
+          )}
+        >
+          <form className="admin-modal-form" id="admin-blog-post-form" onSubmit={handleSaveBlogPost}>
+            <label className="admin-modal-wide">Title<input value={blogPostDraft.title} onChange={(event) => setBlogPostDraft((draft) => ({ ...draft, title: event.target.value }))} placeholder="7 Book Formatting Mistakes That Can Ruin Your KDP Print Quality" autoFocus /></label>
+            <label>Category<select value={blogPostDraft.categoryId} onChange={(event) => setBlogPostDraft((draft) => ({ ...draft, categoryId: event.target.value }))}><option value="">Uncategorized</option>{adminBlogCategories.map((category) => <option value={category.apiId} key={category.apiId}>{category.label}</option>)}</select></label>
+            <label>Author<input value={blogPostDraft.author} onChange={(event) => setBlogPostDraft((draft) => ({ ...draft, author: event.target.value }))} placeholder="Danajet" /></label>
+            <label>Tags<input value={blogPostDraft.tags} onChange={(event) => setBlogPostDraft((draft) => ({ ...draft, tags: event.target.value }))} placeholder="Publishing, Book Design" /></label>
+            <label>Read Time<input value={blogPostDraft.readTime} onChange={(event) => setBlogPostDraft((draft) => ({ ...draft, readTime: event.target.value }))} placeholder="6 min read" /></label>
+            <label>Published Date<input type="date" value={blogPostDraft.publishedAt} onChange={(event) => setBlogPostDraft((draft) => ({ ...draft, publishedAt: event.target.value }))} /></label>
+            <label>Display Order<input type="number" value={blogPostDraft.displayOrder} onChange={(event) => setBlogPostDraft((draft) => ({ ...draft, displayOrder: event.target.value }))} /></label>
+            <label className="admin-check-field"><input type="checkbox" checked={blogPostDraft.isPublished} onChange={(event) => setBlogPostDraft((draft) => ({ ...draft, isPublished: event.target.checked }))} /> Published</label>
+            <label className="admin-modal-wide">Summary<textarea value={blogPostDraft.summary} onChange={(event) => setBlogPostDraft((draft) => ({ ...draft, summary: event.target.value }))} placeholder="One or two sentences shown on the blog list card." /></label>
+            <label className="admin-modal-wide">Excerpt<textarea value={blogPostDraft.excerpt} onChange={(event) => setBlogPostDraft((draft) => ({ ...draft, excerpt: event.target.value }))} placeholder="Shown at the top of the article page. Leave blank to reuse the summary." /></label>
+            <label className="admin-modal-wide">Content<textarea className="admin-blog-content-field" value={blogPostDraft.content} onChange={(event) => setBlogPostDraft((draft) => ({ ...draft, content: event.target.value }))} placeholder={"Plain text. Leave a blank line between paragraphs.\nA line in ALL CAPS on its own becomes a subheading.\nLines starting with • become a bulleted list."} /></label>
+            <label className="admin-upload-box admin-click-upload admin-modal-wide">
+              <Upload size={20} />
+              <strong>{blogPostDraft.imageFile ? blogPostDraft.imageFile.name : "Upload cover image"}</strong>
+              <span>Optional. Click to choose an image. It will upload to Django when you save.</span>
+              <input type="file" accept="image/*" onChange={(event) => setBlogPostDraft((draft) => ({ ...draft, imageFile: event.target.files?.[0] || null }))} />
+            </label>
+            {blogPostImagePreview && (
+              <div className="admin-media-preview-grid admin-modal-wide">
+                <img src={blogPostImagePreview} alt="Cover preview" />
               </div>
             )}
           </form>
