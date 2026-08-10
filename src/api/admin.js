@@ -495,6 +495,72 @@ export async function updateAdminRequestStatus(request, status) {
   return normalizeAdminRequest(updated);
 }
 
+export function normalizeAdminOrder(order) {
+  return {
+    ...order,
+    id: order.id,
+    customerName: `${order.first_name || ""} ${order.last_name || ""}`.trim() || "Guest",
+    date: order.created_at ? new Date(order.created_at).toLocaleDateString() : "",
+    receiptUrl: resolveMediaUrl(order.receipt_url || ""),
+  };
+}
+
+export async function listAdminOrders() {
+  const data = extractResults(await apiRequest("/api/orders/?ordering=-created_at"));
+  return data.map(normalizeAdminOrder);
+}
+
+export async function updateAdminOrder(order, fields) {
+  const updated = await apiRequest(`/api/orders/${order.id}/`, {
+    method: "PATCH",
+    body: fields,
+  });
+  return normalizeAdminOrder(updated);
+}
+
+export function normalizeAdminContactMessage(message) {
+  return {
+    ...message,
+    id: message.id,
+    name: message.name || "Visitor",
+    date: message.created_at ? new Date(message.created_at).toLocaleDateString() : "",
+  };
+}
+
+export async function listAdminContactMessages() {
+  const data = extractResults(await apiRequest("/api/contact-messages/?ordering=-created_at"));
+  return data.map(normalizeAdminContactMessage);
+}
+
+export async function updateAdminContactMessageStatus(message, status) {
+  const updated = await apiRequest(`/api/contact-messages/${message.id}/`, {
+    method: "PATCH",
+    body: { status },
+  });
+  return normalizeAdminContactMessage(updated);
+}
+
+export function normalizeAdminTransportSignup(entry) {
+  return {
+    ...entry,
+    id: entry.id,
+    date: entry.created_at ? new Date(entry.created_at).toLocaleDateString() : "",
+  };
+}
+
+export async function listAdminTransportWaitlist() {
+  const data = extractResults(await apiRequest("/api/transport-waitlist/?ordering=-created_at"));
+  return data.map(normalizeAdminTransportSignup);
+}
+
+export async function updateAdminTransportStatus(entry, status) {
+  const updated = await apiRequest(`/api/transport-waitlist/${entry.id}/`, {
+    method: "PATCH",
+    body: { status },
+  });
+  return normalizeAdminTransportSignup(updated);
+}
+
 export async function listAdminBrands() {
   const data = extractResults(await apiRequest("/api/brands/?ordering=display_order,name"));
   return data.map(normalizeAdminBrand);

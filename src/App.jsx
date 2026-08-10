@@ -8,7 +8,9 @@ import {
   ChevronDown as LucideChevronDown,
   ChevronLeft as LucideChevronLeft,
   ChevronRight as LucideChevronRight,
+  Check,
   ClipboardList,
+  Copy,
   Download,
   Edit3,
   Eye,
@@ -56,14 +58,17 @@ import {
   deleteAdminReview,
   deleteAdminShopCategory,
   listAdminBrands,
+  listAdminContactMessages,
   listAdminCourses,
   listAdminMedia,
+  listAdminOrders,
   listAdminPortfolio,
   listAdminProducts,
   listAdminRequests,
   listAdminReviews,
   listAdminSettings,
   listAdminShopCategories,
+  listAdminTransportWaitlist,
   saveAdminCourse,
   saveAdminBrand,
   saveAdminMedia,
@@ -72,8 +77,11 @@ import {
   saveAdminReview,
   saveAdminSetting,
   saveAdminShopCategory,
+  updateAdminContactMessageStatus,
+  updateAdminOrder,
   updateAdminProduct,
   updateAdminRequestStatus,
+  updateAdminTransportStatus,
   uploadAdminMediaFile,
 } from "./api/admin";
 import { getCurrentUser, loginUser, logoutUser, registerUser } from "./api/auth";
@@ -86,11 +94,13 @@ import {
   removeCartItem,
   submitCheckout,
   updateCartItemQuantity,
+  uploadOrderReceipt,
 } from "./api/cart";
 import { resolveMediaUrl } from "./api/client";
 import { subscribeToNewsletter } from "./api/newsletter";
 import { getBlogPost, getBlogPosts } from "./api/blog";
 import { getCourse, getCourses, getProduct, getProducts, getShopCategories, requestFreeResourceDownload } from "./api/shop";
+import { submitContactMessage, submitProjectRequest, submitTransportWaitlist } from "./api/leads";
 import { mockProducts, shopCategories } from "./data/products";
 
 function BrandIcon({ label, children, className = "", size = 18 }) {
@@ -750,6 +760,27 @@ function LoadingSpinner({ label = "Loading" }) {
       <span className="loading-spinner" aria-hidden="true" />
       <span className="sr-only">{label}</span>
     </div>
+  );
+}
+
+function CopyableValue({ value }) {
+  const [isCopied, setIsCopied] = useState(false);
+
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(value);
+      setIsCopied(true);
+      setTimeout(() => setIsCopied(false), 2000);
+    } catch {
+      // Clipboard access denied or unavailable; nothing more we can do here.
+    }
+  };
+
+  return (
+    <button className="copyable-value" type="button" onClick={handleCopy} aria-label={`Copy ${value}`}>
+      <span>{value}</span>
+      {isCopied ? <Check size={14} /> : <Copy size={14} />}
+    </button>
   );
 }
 
@@ -2734,6 +2765,8 @@ function CheckoutPage() {
   const [checkoutError, setCheckoutError] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [internationalReceiptFile, setInternationalReceiptFile] = useState(null);
+  const [ngReceiptFile, setNgReceiptFile] = useState(null);
   const [currency] = useCurrency();
   const footerSettings = useFooterSettings();
   const subtotal = cart.reduce((total, item) => total + Number(item.price || 0) * item.quantity, 0);
@@ -2781,8 +2814,8 @@ function CheckoutPage() {
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
-  const submitPaymentChoice = async (paymentMethod) => {
-    if (!customerDetails) return;
+  const submitPaymentChoice = async (paymentMethod, receiptFile) => {
+    if (!customerDetails || isSubmitting) return null;
     setCheckoutError("");
     setIsSubmitting(true);
     try {
@@ -2795,21 +2828,29 @@ function CheckoutPage() {
       });
       setOrderNumber(order.order_number || "");
       setPlacedOrder(order);
-      setCheckoutStep(paymentMethod === "bank_transfer_ng" ? "bank" : "complete");
+      setCheckoutStep("complete");
       window.dispatchEvent(new Event("danajet-cart-updated"));
       window.scrollTo({ top: 0, behavior: "smooth" });
+      if (receiptFile) {
+        try {
+          await uploadOrderReceipt(order.order_number, order.email, receiptFile);
+        } catch {
+          // Order is already placed; the customer can still upload the receipt from the next screen.
+        }
+      }
+      return order;
     } catch (apiError) {
       setCheckoutError(apiError.message || "Please check your order details and try again.");
+      return null;
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  const whatsappMessage = `Hello Danajet, I have completed payment for Order ${orderNumber}. I would like to send my payment receipt for confirmation.`;
-  const whatsappDigits = String(footerSettings.whatsapp || "").replace(/\D/g, "");
-  const whatsappReceiptHref = whatsappDigits.length >= 7
-    ? `https://wa.me/${whatsappDigits}?text=${encodeURIComponent(whatsappMessage)}`
-    : `/contact#whatsapp`;
+  const genericWhatsappDigits = String(footerSettings.whatsapp || "").replace(/\D/g, "");
+  const genericWhatsappHref = genericWhatsappDigits.length >= 7
+    ? `https://wa.me/${genericWhatsappDigits}?text=${encodeURIComponent("Hello Danajet, I have a question about my payment.")}`
+    : "/contact#whatsapp";
 
   return (
     <div className="checkout-page">
@@ -2835,33 +2876,12 @@ function CheckoutPage() {
                     <div className="checkout-success">
                       <PackageCheck size={34} />
                       <p className="eyebrow">Order Received</p>
-                      <h2>We have received your order details.</h2>
-                      <p>Your order number is <strong>{orderNumber}</strong>. You will receive an email with the next steps.</p>
+                      <h2>Your order has been received.</h2>
+                      <p>Your order number is <strong>{orderNumber}</strong>. Thank you for your payment — we'll confirm it and follow up by email shortly.</p>
                       <div className="checkout-next-actions">
                         <a className="button" href="/">Back Home <ArrowRight size={17} /></a>
                         <a className="button button-outline" href="/login">Create or sign in to track orders</a>
                       </div>
-                    </div>
-                  ) : checkoutStep === "bank" ? (
-                    <div className="payment-bank-panel">
-                      <p className="eyebrow">Nigerian Customers — Bank Transfer</p>
-                      <h2>Complete your bank transfer.</h2>
-                      <div className="bank-details">
-                        <div><span>Bank Name</span><strong>First Bank of Nigeria</strong></div>
-                        <div><span>Account Name</span><strong>Danajet Nig. Ltd</strong></div>
-                        <div><span>Account Number</span><strong>2048367400</strong></div>
-                        <div><span>Amount to Pay</span><strong>{formatMoney(placedOrder?.display_total || 0, "NGN", "NGN")}</strong></div>
-                        <div><span>Order Number</span><strong>{orderNumber}</strong></div>
-                      </div>
-                      <div className="payment-order-items">
-                        <h3>Your Order</h3>
-                        {placedOrder?.items?.map((item) => (
-                          <div key={item.id}><span>{item.quantity}× {item.title}</span><strong>{formatMoney(item.line_total, "NGN")}</strong></div>
-                        ))}
-                        <div className="payment-order-total"><span>Total Amount</span><strong>{formatMoney(placedOrder?.display_total || 0, "NGN", "NGN")}</strong></div>
-                      </div>
-                      <p className="bank-instructions">Please use your order number as the payment reference. After making payment, send your payment receipt through WhatsApp for confirmation.</p>
-                      <a className="button whatsapp-payment-button" href={whatsappReceiptHref} target={whatsappReceiptHref.startsWith("http") ? "_blank" : undefined} rel="noopener noreferrer"><MessageCircle size={19} /> Send Payment Receipt on WhatsApp</a>
                     </div>
                   ) : checkoutStep === "payment" ? (
                     <div className="payment-options">
@@ -2876,17 +2896,21 @@ function CheckoutPage() {
                             <h3>International Customers</h3>
                             <p>Transfer the total amount to our USD receiving account. After making payment, upload your payment confirmation below.</p>
                             <div className="bank-details">
-                              <div><span>Bank Name</span><strong>USD Receiving Account</strong></div>
-                              <div><span>Account Name</span><strong>Danajet Nig. Ltd.</strong></div>
-                              <div><span>Account Number</span><strong>Available on request</strong></div>
+                              <div><span>Bank Name</span><strong>{footerSettings.bankIntlName || adminContactDefaults.bankIntlName}</strong></div>
+                              <div><span>Account Name</span><strong>{footerSettings.bankIntlAccountName || adminContactDefaults.bankIntlAccountName}</strong></div>
+                              <div><span>Account Number</span><CopyableValue value={footerSettings.bankIntlAccountNumber || adminContactDefaults.bankIntlAccountNumber} /></div>
                             </div>
                             <label className="upload-receipt-field">
                               <span>Upload Payment Receipt</span>
-                              <input type="file" accept="image/*,application/pdf" />
+                              <input type="file" accept="image/*,application/pdf" onChange={(event) => setInternationalReceiptFile(event.target.files?.[0] || null)} />
                             </label>
+                            {internationalReceiptFile && <small className="upload-receipt-selected">Selected: {internationalReceiptFile.name}</small>}
                           </div>
                         </div>
-                        <button className="button" type="button" disabled={isSubmitting} onClick={() => submitPaymentChoice("international_request")}>{isSubmitting ? "Creating Order" : <><MessageCircle size={17} /> Send via WhatsApp</>} </button>
+                        <div className="payment-submit-actions">
+                          <button className="button" type="button" disabled={isSubmitting} onClick={() => submitPaymentChoice("international_request", internationalReceiptFile)}>{isSubmitting ? "Submitting" : "Submit"}</button>
+                          <a className="button button-outline whatsapp-payment-button" href={genericWhatsappHref} target={genericWhatsappHref.startsWith("http") ? "_blank" : undefined} rel="noopener noreferrer"><MessageCircle size={17} /> Send via WhatsApp</a>
+                        </div>
                       </article>
                       <article className="payment-option-card">
                         <div>
@@ -2895,19 +2919,20 @@ function CheckoutPage() {
                             <h3>Nigerian Customers</h3>
                         <p>Please transfer the total amount to the Nigerian bank account below. Once payment is complete, upload your receipt or send it via WhatsApp.</p>
                             <div className="bank-details">
-                              <div><span>Bank Name</span><strong>First Bank of Nigeria</strong></div>
-                              <div><span>Account Name</span><strong>Danajet Nig. Ltd.</strong></div>
-                              <div><span>Account Number</span><strong>2048367400</strong></div>
+                              <div><span>Bank Name</span><strong>{footerSettings.bankNgName || adminContactDefaults.bankNgName}</strong></div>
+                              <div><span>Account Name</span><strong>{footerSettings.bankNgAccountName || adminContactDefaults.bankNgAccountName}</strong></div>
+                              <div><span>Account Number</span><CopyableValue value={footerSettings.bankNgAccountNumber || adminContactDefaults.bankNgAccountNumber} /></div>
                             </div>
                             <label className="upload-receipt-field">
                               <span>Upload Payment Receipt</span>
-                              <input type="file" accept="image/*,application/pdf" />
+                              <input type="file" accept="image/*,application/pdf" onChange={(event) => setNgReceiptFile(event.target.files?.[0] || null)} />
                             </label>
+                            {ngReceiptFile && <small className="upload-receipt-selected">Selected: {ngReceiptFile.name}</small>}
                           </div>
                         </div>
                         <div className="payment-submit-actions">
-                          <button className="button button-outline" type="button" disabled title="Receipt upload is available on this step">Upload Receipt</button>
-                          <a className="button whatsapp-payment-button" href={whatsappReceiptHref} target={whatsappReceiptHref.startsWith("http") ? "_blank" : undefined} rel="noopener noreferrer"><MessageCircle size={18} /> Send via WhatsApp</a>
+                          <button className="button" type="button" disabled={isSubmitting} onClick={() => submitPaymentChoice("bank_transfer_ng", ngReceiptFile)}>{isSubmitting ? "Submitting" : "Submit"}</button>
+                          <a className="button button-outline whatsapp-payment-button" href={genericWhatsappHref} target={genericWhatsappHref.startsWith("http") ? "_blank" : undefined} rel="noopener noreferrer"><MessageCircle size={18} /> Send via WhatsApp</a>
                         </div>
                       </article>
                       {checkoutError && <p className="form-error">{checkoutError}</p>}
@@ -3548,19 +3573,57 @@ function AboutPage() {
 
 function RequestProjectPage() {
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState("");
   const [otherService, setOtherService] = useState("");
   const [selectedBookSize, setSelectedBookSize] = useState("");
   const [contactMethod, setContactMethod] = useState([]);
   const whatsappSelected = contactMethod.includes("WhatsApp");
 
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault();
-    if (whatsappSelected && !event.currentTarget.phone.value.trim()) {
-      event.currentTarget.phone.focus();
+    const form = event.currentTarget;
+    if (whatsappSelected && !form.phone.value.trim()) {
+      form.phone.focus();
       return;
     }
-    setIsSubmitted(true);
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    const formData = new FormData(form);
+    const services = formData.getAll("services");
+    if (otherService.trim()) services.push(otherService.trim());
+    const preferredContactMethod = contactMethod.includes("WhatsApp") && contactMethod.includes("Email")
+      ? "any"
+      : contactMethod.includes("WhatsApp")
+        ? "whatsapp"
+        : "email";
+    const message = [
+      formData.get("projectDetails"),
+      formData.get("manuscriptReady") ? `Manuscript status: ${formData.get("manuscriptReady")}` : "",
+    ].filter(Boolean).join("\n\n");
+
+    setIsSubmitting(true);
+    setSubmitError("");
+    try {
+      await submitProjectRequest({
+        name: formData.get("fullName"),
+        email: formData.get("email"),
+        phone: formData.get("phone") || "",
+        services,
+        service: services.join(", "),
+        book_size: formData.get("bookSize") || "",
+        budget: formData.get("budget") || "",
+        stage: formData.get("projectStage") || "",
+        timeline: formData.get("timeline") || "",
+        referral_source: formData.get("referral") || "",
+        preferred_contact_method: preferredContactMethod,
+        message,
+      });
+      setIsSubmitted(true);
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    } catch (error) {
+      setSubmitError(error.message || "We could not submit your request. Please try again.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleContactMethodChange = (event) => {
@@ -3747,7 +3810,8 @@ function RequestProjectPage() {
 
                 <p className="request-confidentiality">Your manuscript and project details will be treated with complete confidentiality and will never be shared with third parties.</p>
 
-                <button className="button request-submit" type="submit">Start My Book Journey <Send size={17} /></button>
+                {submitError && <p className="form-error">{submitError}</p>}
+                <button className="button request-submit" type="submit" disabled={isSubmitting}>{isSubmitting ? "Submitting" : <>Start My Book Journey <Send size={17} /></>}</button>
               </form>
             )}
           </div>
@@ -3790,9 +3854,29 @@ function ContactPage() {
     { label: "Response Time", value: "Usually within 1 - 3 hours" },
   ];
 
-  const handleSubmit = (event) => {
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState("");
+
+  const handleSubmit = async (event) => {
     event.preventDefault();
-    setIsSubmitted(true);
+    const formData = new FormData(event.currentTarget);
+    setIsSubmitting(true);
+    setSubmitError("");
+    try {
+      await submitContactMessage({
+        name: formData.get("fullName"),
+        email: formData.get("email"),
+        phone: formData.get("phone") || "",
+        reason: formData.get("reason") || "",
+        subject: formData.get("reason") || "",
+        message: formData.get("message"),
+      });
+      setIsSubmitted(true);
+    } catch (error) {
+      setSubmitError(error.message || "We could not send your message. Please try again.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -3892,7 +3976,8 @@ function ContactPage() {
                   <input name="consent" type="checkbox" required />
                   <span>I understand Danajet may contact me about this message.</span>
                 </label>
-                <button className="button contact-submit" type="submit">Send Message <Send size={17} /></button>
+                {submitError && <p className="form-error">{submitError}</p>}
+                <button className="button contact-submit" type="submit" disabled={isSubmitting}>{isSubmitting ? "Sending" : <>Send Message <Send size={17} /></>}</button>
               </form>
             )}
           </div>
@@ -3906,10 +3991,21 @@ function ContactPage() {
 function TransportPage() {
   const [email, setEmail] = useState("");
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState("");
 
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault();
-    setIsSubmitted(true);
+    setIsSubmitting(true);
+    setSubmitError("");
+    try {
+      await submitTransportWaitlist({ email });
+      setIsSubmitted(true);
+    } catch (error) {
+      setSubmitError(error.message || "We could not join you to the list. Please try again.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -3951,7 +4047,8 @@ function TransportPage() {
                           required
                         />
                       </label>
-                      <button className="button" type="submit">Notify Me <Send size={17} /></button>
+                      {submitError && <p className="form-error">{submitError}</p>}
+                      <button className="button" type="submit" disabled={isSubmitting}>{isSubmitting ? "Joining" : <>Notify Me <Send size={17} /></>}</button>
                     </>
                   )}
                 </form>
@@ -4489,6 +4586,9 @@ const adminNavItems = [
   { id: "reviews", label: "Reviews", icon: Users },
   { id: "requests", label: "Project Requests", icon: Inbox },
   { id: "form-options", label: "Request Form", icon: ClipboardList },
+  { id: "orders", label: "Orders & Receipts", icon: Download },
+  { id: "contact-messages", label: "Contact Messages", icon: FileText },
+  { id: "transport-waitlist", label: "Transport Waitlist", icon: Plane },
   { id: "featured", label: "Featured Work", icon: Star },
   { id: "contact-control", label: "Contact/Footer", icon: MessageCircle },
   { id: "media-library", label: "Media Library", icon: Upload },
@@ -4539,6 +4639,12 @@ const adminContactDefaults = {
   tiktok: "https://www.tiktok.com/@danajetbooklab",
   linkedin: "https://www.linkedin.com/in/ajetunmobi-daniel",
   footerCopy: "Helping authors create, publish, and share professional books while building educational resources, creative media, and future innovations.",
+  bankNgName: "First Bank of Nigeria",
+  bankNgAccountName: "Danajet Nig. Ltd",
+  bankNgAccountNumber: "2048367400",
+  bankIntlName: "USD Receiving Account",
+  bankIntlAccountName: "Danajet Nig. Ltd.",
+  bankIntlAccountNumber: "2048367455",
 };
 
 function getSettingsGroup(settings, groupKey) {
@@ -4814,6 +4920,99 @@ function AdminRequestsPanel({ requests, onViewRequest, onCycleRequestStatus, onD
         ))}
       </div>
       {visibleRequests.length === 0 && <AdminEmptyState copy="No requests match your current search." />}
+    </section>
+  );
+}
+
+function AdminOrdersPanel({ orders, onViewOrder, onCycleOrderPaymentStatus, query }) {
+  const visibleOrders = orders.filter((order) =>
+    `${order.order_number} ${order.customerName} ${order.email} ${order.payment_method} ${order.payment_status} ${order.status}`.toLowerCase().includes(query)
+  );
+
+  return (
+    <section className="admin-panel">
+      <AdminSectionHeader
+        eyebrow="Checkout"
+        title="Orders and payment receipts"
+        copy="See every order placed on the site, confirm which ones have an uploaded receipt, and track payment status through to completion."
+      />
+      <div className="admin-request-board">
+        {visibleOrders.map((order) => (
+          <article className="admin-request-card" key={order.id}>
+            <div><strong>{order.order_number}</strong><mark>{order.payment_status}</mark></div>
+            <p>{order.customerName} - {order.email}</p>
+            <span>{formatMoney(order.total, order.currency, order.currency)} verified - {order.payment_method === "bank_transfer_ng" ? "Nigerian Bank Transfer" : order.payment_method === "international_request" ? "International" : "Online Card"}</span>
+            <small>Customer was shown {formatMoney(order.display_total, order.display_currency, order.display_currency)} - {order.receiptUrl ? "Receipt uploaded" : "No receipt yet"} - {order.date}</small>
+            <footer>
+              <button type="button" onClick={() => onViewOrder(order)}>Open Order</button>
+              <button type="button" onClick={() => onCycleOrderPaymentStatus(order)}>Confirm Payment</button>
+              {order.receiptUrl && <a href={order.receiptUrl} target="_blank" rel="noopener noreferrer"><Download size={14} /> Receipt</a>}
+            </footer>
+          </article>
+        ))}
+      </div>
+      {visibleOrders.length === 0 && <AdminEmptyState copy="No orders match your current search." />}
+    </section>
+  );
+}
+
+function AdminContactMessagesPanel({ messages, onViewMessage, onCycleMessageStatus, query }) {
+  const visibleMessages = messages.filter((message) =>
+    `${message.name} ${message.email} ${message.subject} ${message.reason} ${message.status}`.toLowerCase().includes(query)
+  );
+
+  return (
+    <section className="admin-panel">
+      <AdminSectionHeader
+        eyebrow="Inbox"
+        title="Contact messages"
+        copy="Messages submitted from the Contact page, in the order they arrived."
+      />
+      <div className="admin-request-board">
+        {visibleMessages.map((message) => (
+          <article className="admin-request-card" key={message.id}>
+            <div><strong>{message.name}</strong><mark>{message.status}</mark></div>
+            <p>{message.subject || message.reason || "General question"}</p>
+            <span>{message.email}</span>
+            <small>{message.message?.slice(0, 90)}{message.message?.length > 90 ? "…" : ""} - {message.date}</small>
+            <footer>
+              <button type="button" onClick={() => onViewMessage(message)}>Open Message</button>
+              <button type="button" onClick={() => onCycleMessageStatus(message)}>Next Status</button>
+            </footer>
+          </article>
+        ))}
+      </div>
+      {visibleMessages.length === 0 && <AdminEmptyState copy="No messages match your current search." />}
+    </section>
+  );
+}
+
+function AdminTransportWaitlistPanel({ signups, onCycleSignupStatus, query }) {
+  const visibleSignups = signups.filter((entry) =>
+    `${entry.email} ${entry.name} ${entry.city} ${entry.status}`.toLowerCase().includes(query)
+  );
+
+  return (
+    <section className="admin-panel">
+      <AdminSectionHeader
+        eyebrow="Danajet Transport"
+        title="Launch waitlist"
+        copy="Everyone who has asked to be notified when Danajet Transport launches."
+      />
+      <div className="admin-request-board">
+        {visibleSignups.map((entry) => (
+          <article className="admin-request-card" key={entry.id}>
+            <div><strong>{entry.email}</strong><mark>{entry.status}</mark></div>
+            <p>{entry.name || "Name not provided"}</p>
+            <span>{entry.phone || "No phone"} - {entry.city || "No city"}</span>
+            <small>{entry.date}</small>
+            <footer>
+              <button type="button" onClick={() => onCycleSignupStatus(entry)}>Next Status</button>
+            </footer>
+          </article>
+        ))}
+      </div>
+      {visibleSignups.length === 0 && <AdminEmptyState copy="No waitlist signups match your current search." />}
     </section>
   );
 }
@@ -5196,6 +5395,11 @@ function AdminDashboardPage({ onLogout }) {
   );
   const [adminReviews, setAdminReviews] = useState(() => testimonials.map((review, index) => ({ ...review, id: `review-${index}`, rating: 5 })));
   const [adminRequests, setAdminRequests] = useState(adminProjectRequests);
+  const [adminOrders, setAdminOrders] = useState([]);
+  const [adminContactMessages, setAdminContactMessages] = useState([]);
+  const [adminTransportSignups, setAdminTransportSignups] = useState([]);
+  const [selectedOrder, setSelectedOrder] = useState(null);
+  const [selectedContactMessage, setSelectedContactMessage] = useState(null);
   const [adminHighlights, setAdminHighlights] = useState(featuredWorkHighlights);
   const [adminAbout, setAdminAbout] = useState(adminAboutDefaults);
   const [aboutVideoUploadProgress, setAboutVideoUploadProgress] = useState(0);
@@ -5547,7 +5751,7 @@ function AdminDashboardPage({ onLogout }) {
     async function loadAdminData() {
       setAdminDataLoading(true);
       try {
-        const [products, courses, portfolioItems, reviews, requests, mediaAssets, shopCategoryItems, brandItems, settings] = await Promise.all([
+        const [products, courses, portfolioItems, reviews, requests, mediaAssets, shopCategoryItems, brandItems, settings, orders, contactMessages, transportSignups] = await Promise.all([
           listAdminProducts(),
           listAdminCourses(),
           listAdminPortfolio(),
@@ -5557,6 +5761,9 @@ function AdminDashboardPage({ onLogout }) {
           listAdminShopCategories().catch(() => []),
           listAdminBrands().catch(() => []),
           listAdminSettings().catch(() => []),
+          listAdminOrders().catch(() => []),
+          listAdminContactMessages().catch(() => []),
+          listAdminTransportWaitlist().catch(() => []),
         ]);
 
         let loadedPortfolioItems = portfolioItems;
@@ -5592,6 +5799,9 @@ function AdminDashboardPage({ onLogout }) {
         setAdminPortfolioItems(loadedPortfolioItems);
         setAdminReviews(loadedReviews);
         setAdminRequests(requests);
+        setAdminOrders(orders);
+        setAdminContactMessages(contactMessages);
+        setAdminTransportSignups(transportSignups);
         setAdminMediaLibrary(mediaAssets);
         if (shopCategoryItems.length) setAdminShopCategoryItems(shopCategoryItems);
         if (brandItems.length) setAdminBrandSections(brandItems);
@@ -6032,6 +6242,42 @@ function AdminDashboardPage({ onLogout }) {
     }
   };
 
+  const handleCycleOrderPaymentStatus = async (order) => {
+    const statuses = ["unpaid", "pending", "paid", "failed", "refunded"];
+    const nextStatus = statuses[(statuses.indexOf(order.payment_status) + 1) % statuses.length];
+    try {
+      const updated = await updateAdminOrder(order, { payment_status: nextStatus });
+      setAdminOrders((current) => current.map((item) => (item.id === order.id ? updated : item)));
+      showAdminNotice("Order payment status saved to Django.");
+    } catch (error) {
+      showAdminNotice(`${error.message || "Order status could not be saved."} Make sure you are logged in as staff.`);
+    }
+  };
+
+  const handleCycleMessageStatus = async (message) => {
+    const statuses = ["New", "Read", "Replied", "Closed"];
+    const nextStatus = statuses[(statuses.indexOf(message.status) + 1) % statuses.length];
+    try {
+      const updated = await updateAdminContactMessageStatus(message, nextStatus);
+      setAdminContactMessages((current) => current.map((item) => (item.id === message.id ? updated : item)));
+      showAdminNotice("Message status saved to Django.");
+    } catch (error) {
+      showAdminNotice(`${error.message || "Message status could not be saved."} Make sure you are logged in as staff.`);
+    }
+  };
+
+  const handleCycleTransportStatus = async (entry) => {
+    const statuses = ["New", "Contacted", "Closed"];
+    const nextStatus = statuses[(statuses.indexOf(entry.status) + 1) % statuses.length];
+    try {
+      const updated = await updateAdminTransportStatus(entry, nextStatus);
+      setAdminTransportSignups((current) => current.map((item) => (item.id === entry.id ? updated : item)));
+      showAdminNotice("Waitlist status saved to Django.");
+    } catch (error) {
+      showAdminNotice(`${error.message || "Waitlist status could not be saved."} Make sure you are logged in as staff.`);
+    }
+  };
+
   const handleDownloadRequest = (request) => {
     downloadAdminReport(
       `${request.name.toLowerCase().replace(/[^a-z0-9]+/g, "-")}-request.txt`,
@@ -6221,6 +6467,9 @@ function AdminDashboardPage({ onLogout }) {
     if (activeAdminSection === "reviews") return <AdminReviewsPanel reviews={adminReviews} onAddReview={handleOpenReviewModal} onEditReview={handleOpenEditReviewModal} onDeleteReview={handleDeleteReview} query={normalizedAdminSearch} />;
     if (activeAdminSection === "requests") return <AdminRequestsPanel requests={adminRequests} onViewRequest={(request) => { setSelectedRequest(request); setActiveAdminModal("request"); }} onCycleRequestStatus={handleCycleRequestStatus} onDownloadRequest={handleDownloadRequest} onDownloadAllRequests={handleDownloadAllRequests} query={normalizedAdminSearch} />;
     if (activeAdminSection === "form-options") return <AdminRequestFormOptionsPanel options={adminRequestFormOptions} onUpdate={(key, value) => setAdminRequestFormOptions((current) => ({ ...current, [key]: value }))} onSave={() => saveSettingsDraft("request-form", adminRequestFormOptions, "Request form options")} />;
+    if (activeAdminSection === "orders") return <AdminOrdersPanel orders={adminOrders} onViewOrder={(order) => { setSelectedOrder(order); setActiveAdminModal("order"); }} onCycleOrderPaymentStatus={handleCycleOrderPaymentStatus} query={normalizedAdminSearch} />;
+    if (activeAdminSection === "contact-messages") return <AdminContactMessagesPanel messages={adminContactMessages} onViewMessage={(message) => { setSelectedContactMessage(message); setActiveAdminModal("contact-message"); }} onCycleMessageStatus={handleCycleMessageStatus} query={normalizedAdminSearch} />;
+    if (activeAdminSection === "transport-waitlist") return <AdminTransportWaitlistPanel signups={adminTransportSignups} onCycleSignupStatus={handleCycleTransportStatus} query={normalizedAdminSearch} />;
     if (activeAdminSection === "featured") return <AdminFeaturedPanel highlights={adminHighlights} onAddHighlight={handleOpenHighlightModal} onEditHighlight={handleOpenEditHighlightModal} onDeleteHighlight={handleDeleteHighlight} query={normalizedAdminSearch} />;
     if (activeAdminSection === "cta-control") return (
       <AdminCollectionPanel
@@ -6262,6 +6511,12 @@ function AdminDashboardPage({ onLogout }) {
           { key: "tiktok", label: "TikTok Link" },
           { key: "linkedin", label: "LinkedIn Link" },
           { key: "footerCopy", label: "Footer Copy", type: "textarea", wide: true },
+          { key: "bankNgName", label: "Nigeria Bank Name" },
+          { key: "bankNgAccountName", label: "Nigeria Account Name" },
+          { key: "bankNgAccountNumber", label: "Nigeria Account Number" },
+          { key: "bankIntlName", label: "International Bank Name" },
+          { key: "bankIntlAccountName", label: "International Account Name" },
+          { key: "bankIntlAccountNumber", label: "International Account Number" },
         ]}
       />
     );
@@ -6593,6 +6848,72 @@ function AdminDashboardPage({ onLogout }) {
         >
           <div className="admin-request-detail">
             {Object.entries(selectedRequest).map(([key, value]) => (
+              <div key={key}>
+                <strong>{key.replace(/_/g, " ")}</strong>
+                <span>{typeof value === "object" && value !== null ? JSON.stringify(value, null, 2) : String(value || "Not provided")}</span>
+              </div>
+            ))}
+          </div>
+        </AdminModal>
+      )}
+      {activeAdminModal === "order" && selectedOrder && (
+        <AdminModal
+          eyebrow="Order"
+          title={selectedOrder.order_number || "Order"}
+          onClose={() => {
+            setActiveAdminModal(null);
+            setSelectedOrder(null);
+          }}
+          footer={(
+            <button type="button" onClick={() => {
+              setActiveAdminModal(null);
+              setSelectedOrder(null);
+            }}>Close</button>
+          )}
+        >
+          <div className="admin-request-detail">
+            <div><strong>Customer</strong><span>{selectedOrder.customerName} ({selectedOrder.email})</span></div>
+            <div><strong>Phone</strong><span>{selectedOrder.phone || "Not provided"}</span></div>
+            <div><strong>Payment method</strong><span>{selectedOrder.payment_method}</span></div>
+            <div><strong>Payment status</strong><span>{selectedOrder.payment_status}</span></div>
+            <div><strong>Order status</strong><span>{selectedOrder.status}</span></div>
+            <div><strong>Verified total</strong><span>{formatMoney(selectedOrder.total, selectedOrder.currency, selectedOrder.currency)} — calculated from the cart, this is the trustworthy figure.</span></div>
+            <div><strong>Amount shown to customer</strong><span>{formatMoney(selectedOrder.display_total, selectedOrder.display_currency, selectedOrder.display_currency)} — this figure is set by the customer's browser and is not independently verified. Confirm payment against the verified total above, not this one.</span></div>
+            <div><strong>Items</strong><span>{selectedOrder.items?.length ? selectedOrder.items.map((item) => `${item.quantity}x ${item.title}`).join(", ") : "No items"}</span></div>
+            <div><strong>Notes</strong><span>{selectedOrder.notes || "Not provided"}</span></div>
+            <div><strong>Placed</strong><span>{selectedOrder.date}</span></div>
+            <div>
+              <strong>Receipt</strong>
+              <span>
+                {selectedOrder.receiptUrl ? (
+                  /\.pdf($|\?)/i.test(selectedOrder.receiptUrl) ? (
+                    <a href={selectedOrder.receiptUrl} target="_blank" rel="noopener noreferrer">Open PDF receipt <Download size={14} /></a>
+                  ) : (
+                    <a href={selectedOrder.receiptUrl} target="_blank" rel="noopener noreferrer"><img src={selectedOrder.receiptUrl} alt="Payment receipt" /></a>
+                  )
+                ) : "Not uploaded yet"}
+              </span>
+            </div>
+          </div>
+        </AdminModal>
+      )}
+      {activeAdminModal === "contact-message" && selectedContactMessage && (
+        <AdminModal
+          eyebrow="Contact message"
+          title={selectedContactMessage.name || "Message"}
+          onClose={() => {
+            setActiveAdminModal(null);
+            setSelectedContactMessage(null);
+          }}
+          footer={(
+            <button type="button" onClick={() => {
+              setActiveAdminModal(null);
+              setSelectedContactMessage(null);
+            }}>Close</button>
+          )}
+        >
+          <div className="admin-request-detail">
+            {Object.entries(selectedContactMessage).filter(([key]) => key !== "id").map(([key, value]) => (
               <div key={key}>
                 <strong>{key.replace(/_/g, " ")}</strong>
                 <span>{typeof value === "object" && value !== null ? JSON.stringify(value, null, 2) : String(value || "Not provided")}</span>

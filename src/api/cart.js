@@ -173,3 +173,11 @@ export async function submitCheckout(details) {
 export async function getOrders() {
   return extractResults(await apiRequest("/api/orders/?ordering=-created_at"));
 }
+
+export async function uploadOrderReceipt(orderNumber, email, file) {
+  const formData = new FormData();
+  formData.append("order_number", orderNumber);
+  formData.append("email", email);
+  formData.append("receipt", file);
+  return apiRequest("/api/orders/attach-receipt/", { method: "POST", body: formData });
+}

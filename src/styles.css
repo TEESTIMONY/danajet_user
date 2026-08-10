@@ -1832,7 +1832,7 @@ video.about-video-screen {
   font-size: 18px;
   line-height: 1.65;
 }
-.course-detail-copy .academy-back { margin-bottom: 32px; }
+.course-detail-copy .academy-back { display: flex; margin-bottom: 32px; }
 .course-detail-meta {
   display: flex;
   align-items: center;
@@ -3622,6 +3622,27 @@ video.about-video-screen {
 .payment-order-items span {
   color: var(--muted);
 }
+.copyable-value {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 0;
+  background: none;
+  padding: 0;
+  margin: 0;
+  font: inherit;
+  font-weight: 700;
+  color: var(--ink);
+  cursor: pointer;
+}
+.copyable-value svg {
+  flex: 0 0 auto;
+  color: var(--muted);
+}
+.copyable-value:hover,
+.copyable-value:hover svg {
+  color: var(--orange-dark);
+}
 .payment-order-items h3 {
   padding: 16px;
   border-bottom: 1px solid var(--line);
@@ -3648,6 +3669,13 @@ video.about-video-screen {
 .upload-receipt-field input[type="file"] {
   display: block;
   max-width: 100%;
+}
+.upload-receipt-selected {
+  display: block;
+  margin-top: 8px;
+  color: var(--orange-dark);
+  font-size: 12px;
+  font-weight: 700;
 }
 .loading-spinner-wrap {
   min-height: 96px;
@@ -5052,7 +5080,9 @@ video.about-video-screen {
   margin-top: auto;
 }
 .admin-content-card footer button,
-.admin-request-card footer button {
+.admin-request-card footer button,
+.admin-content-card footer a,
+.admin-request-card footer a {
   min-height: 34px;
   display: inline-flex;
   align-items: center;
@@ -5064,6 +5094,7 @@ video.about-video-screen {
   font-size: 10px;
   font-weight: 900;
   text-transform: uppercase;
+  text-decoration: none;
 }
 .admin-portfolio-card {
   min-width: 0;
@@ -5118,6 +5149,8 @@ video.about-video-screen {
 .admin-action svg,
 .admin-content-card footer button svg,
 .admin-request-card footer button svg,
+.admin-content-card footer a svg,
+.admin-request-card footer a svg,
 .admin-modal button svg,
 .admin-topbar-actions a svg,
 .admin-sidebar-toggle svg {
@@ -5392,6 +5425,10 @@ video.about-video-screen {
   overflow-wrap: anywhere;
   color: #171717;
   font: 13px var(--body);
+}
+.admin-request-detail span img {
+  max-height: 320px;
+  border: 1px solid #dedbd5;
 }
 .admin-login-page {
   min-height: 100vh;
@@ -6266,7 +6303,6 @@ video.about-video-screen {
   .course-detail-copy { text-align: center; }
   .course-detail-copy .academy-back,
   .course-detail-copy > .eyebrow { width: fit-content; margin-right: auto; margin-left: auto; }
-  .course-detail-copy .academy-back { display: flex; justify-content: center; }
   .course-detail-meta,
   .course-detail-actions { justify-content: center; }
   .course-detail-copy h1 { font-size: 48px; }
