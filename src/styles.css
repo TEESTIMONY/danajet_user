@@ -534,6 +534,7 @@ h1 em { display: block; color: var(--orange); font-style: normal; }
 .section-heading-side { display: flex; flex-direction: column; align-items: flex-start; gap: 18px; }
 .section-heading-side > p { margin: 0; color: var(--muted); line-height: 1.7; font-size: 15px; }
 .orange-text { color: var(--orange-dark); }
+.no-wrap { white-space: nowrap; }
 .course-heading-stop { color: var(--ink); }
 .black-punctuation { color: var(--black); }
 .theme-stop { color: var(--black); }
@@ -2434,7 +2435,8 @@ video.about-video-screen {
   justify-items: center;
 }
 .blog-hero .eyebrow {
-  color: var(--orange);
+  background: var(--orange);
+  color: #fff;
 }
 .blog-hero h1 {
   max-width: 1050px;
@@ -2446,7 +2448,7 @@ video.about-video-screen {
 .blog-hero-inner > p:last-child {
   max-width: 720px;
   margin: 0;
-  color: #bbb;
+  opacity: .74;
   font-size: 18px;
   line-height: 1.7;
 }
@@ -5775,6 +5777,10 @@ video.about-video-screen {
 }
 :root[data-theme="dark"] .media-hero .eyebrow {
   background: var(--orange);
+  color: #fff;
+}
+:root[data-theme="dark"] .blog-hero .eyebrow {
+  background: #000;
   color: #fff;
 }
 :root[data-theme="dark"] .button-outline,

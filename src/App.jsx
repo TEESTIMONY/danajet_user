@@ -2072,7 +2072,7 @@ function BlogPage() {
         <section className="blog-hero">
           <div className="container blog-hero-inner">
             <p className="eyebrow">Danajet Blog</p>
-            <h1>Publishing, Design &amp; AI for Independent Authors.</h1>
+            <h1>Publishing, Design &amp; AI for Independent <span className="no-wrap">Authors<span className="orange-text">.</span></span></h1>
             <p>Practical guidance for authors and creators building professional books, publishing systems, and creative workflows.</p>
           </div>
         </section>
@@ -4726,7 +4726,7 @@ function ReviewsPage() {
 
     const interval = window.setInterval(() => {
       setActiveReviewIndex((currentIndex) => (currentIndex + 1) % visibleReviews.length);
-    }, 5200);
+    }, 3000);
 
     return () => window.clearInterval(interval);
   }, [visibleReviews.length]);
