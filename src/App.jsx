@@ -3068,6 +3068,9 @@ function CheckoutPage() {
   const genericWhatsappHref = genericWhatsappDigits.length >= 7
     ? `https://wa.me/${genericWhatsappDigits}?text=${encodeURIComponent("Hello Danajet, I just made payment and here is my receipt.")}`
     : "/contact#whatsapp";
+  const intlAccountNumberWhatsappHref = genericWhatsappDigits.length >= 7
+    ? `https://wa.me/${genericWhatsappDigits}?text=${encodeURIComponent("Hello Danajet, please share your USD account number for an international payment.")}`
+    : "/contact#whatsapp";
 
   return (
     <div className="checkout-page">
@@ -3115,7 +3118,7 @@ function CheckoutPage() {
                             <div className="bank-details">
                               <div><span>Bank Name</span><strong>{footerSettings.bankIntlName || adminContactDefaults.bankIntlName}</strong></div>
                               <div><span>Account Name</span><strong>{footerSettings.bankIntlAccountName || adminContactDefaults.bankIntlAccountName}</strong></div>
-                              <div><span>Account Number</span><CopyableValue value={footerSettings.bankIntlAccountNumber || adminContactDefaults.bankIntlAccountNumber} /></div>
+                              <div><span>Account Number</span><a className="text-link" href={intlAccountNumberWhatsappHref} target={intlAccountNumberWhatsappHref.startsWith("http") ? "_blank" : undefined} rel="noopener noreferrer">Request on WhatsApp <MessageCircle size={14} /></a></div>
                             </div>
                             <label className="upload-receipt-field">
                               <span>Upload Payment Receipt</span>
@@ -4897,7 +4900,7 @@ const adminContactDefaults = {
   bankNgName: "First Bank of Nigeria",
   bankNgAccountName: "Danajet Nig. Ltd",
   bankNgAccountNumber: "2048367400",
-  bankIntlName: "USD Receiving Account",
+  bankIntlName: "JPMorgan Chase Bank, N.A.",
   bankIntlAccountName: "Danajet Nig. Ltd.",
   bankIntlAccountNumber: "2048367455",
 };
